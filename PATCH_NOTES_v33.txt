@@ -1,0 +1,11 @@
+ZACH'S ULTIMATE BUFFET v33
+
+- Cartman artwork updated to the supplied reference image (cartman.png with transparent background).
+- Triple T primary fire is fixed at 0.5 seconds; new abilities: Shadow Slip, Bat Echo Cage, Night Flight.
+- Cartman abilities replaced with Cheese Meteor, Lunchroom Lockdown, and Lunch Money Rain.
+- Multiplayer settings expanded: Boss Health, Player Limit, Revival Health, Revival Protection, Boss Attack Pace, and Starting Health.
+- Starting-health settings update the host's local fighter and remote-player health values.
+- Boss attack pace adjusts the regular boss attack cooldown on the authoritative multiplayer host.
+- Host settings are included in lobby synchronization.
+
+IMPORTANT: Include cartman.png at the repository root when uploading to GitHub Pages.

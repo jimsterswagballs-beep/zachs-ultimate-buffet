@@ -1,0 +1,8 @@
+ZACH'S ULTIMATE BUFFET v32
+
+Cartman reference sprite: cartman.png (transparent background, based on the supplied image).
+Triple T primary fire: 0.5 seconds for the local player and co-op guests.
+Triple T abilities: Triple Ricochet, Backstop Catch, Encore Zone.
+Cartman abilities: Cheesy Poof Volley, Snack Break, Cafeteria Catapult.
+Co-op settings: boss health multiplier, room player limit, hearts at revival, and revival protection duration.
+Room options are shared by the host and guests; host is authoritative.

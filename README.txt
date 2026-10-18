@@ -1,26 +1,30 @@
-ZACH'S ULTIMATE BUFFET — v31
+ZACH'S ULTIMATE BUFFET — v33
 
-WHAT'S NEW IN v31
-- Co-op death screen: choose WAIT FOR REVIVAL / SPECTATE or LEAVE CO-OP / RETURN TO TITLE. Waiting lets you watch the boss fight, and you return with one heart after the boss is defeated.
-- Emergency team revive: if every player is down at once, the entire team is brought back with one heart and temporary invulnerability so a run cannot get stuck waiting for a boss nobody can damage.
-- Clearer multiplayer usernames and lobby roster: edit your name in the room, see each player's ready status, and see names/health during the fight. Names are saved locally.
-- Better connection feedback: join timeouts and disconnected hosts are explained, guests can retry a failed join, the PeerJS signalling connection attempts recovery, and busy data channels skip snapshots instead of building up a lagging queue. Game-state snapshots are sent at a gentler rate to improve stability.
-- Multiplayer state now includes the host player for guests, and the lobby shows clearer player/ready chips.
+WHAT'S NEW IN v33
+- Cartman uses the supplied picture as an in-game sprite. Keep cartman.png in the same repository folder as index.html and game.html.
+- Triple T's primary fire cooldown is fixed at 0.5 seconds in solo play and co-op.
+- Triple T receives three new abilities: Shadow Slip, Bat Echo Cage, and Night Flight.
+- Cartman receives three new abilities: Cheese Meteor, Lunchroom Lockdown, and Lunch Money Rain.
+- Co-op settings expanded to six options: boss health, player limit, revival health, revival protection, boss attack pace, and starting health.
+- Host settings synchronize to guests and lock after the run starts. Player count remains 2–4 including the host.
 
 FILES
 - index.html: game entry point.
 - game.html: game.
-- music/: soundtrack used by the game. Keep this folder beside both HTML files.
+- cartman.png: transparent Cartman image based on the supplied picture.
+- music/: game soundtrack. Keep the folder beside both HTML files.
+- PATCH_NOTES_v33.txt: concise update summary.
 
 HOW TO UPDATE YOUR EXISTING GITHUB PAGES SITE
 1. Extract this ZIP on your computer.
 2. Open your repository: https://github.com/jimsterswagballs-beep/zachs-ultimate-buffet
 3. Click Add file > Upload files.
-4. Drag the updated index.html, game.html, README.txt, and the whole music folder from this extracted v31 folder into the upload area. Do not drag the outer ZachsUltimateBuffet_v31 folder.
-5. Commit directly to main with a message such as "Update game to v31".
-6. GitHub Pages should redeploy automatically. Refresh the public website; if you still see the old version, use Ctrl+F5 or a private window.
+4. Drag index.html, game.html, README.txt, cartman.png, and the whole music folder into the upload area. Do not drag the outer ZachsUltimateBuffet_v33 folder.
+5. Commit directly to main, for example with the message "Update game to v33".
+6. GitHub Pages redeploys automatically. Refresh the public website; if needed, use Ctrl+F5 or a private window.
 
-MULTIPLAYER NOTES
-- Host the game on the public HTTPS GitHub Pages URL and send the in-game invite link to friends. The host's browser tab must stay open.
-- If joining times out, ask the host to create a fresh room and send a new invite link.
-- The networking improvements help on common home networks, but some strict routers/firewalls still require a configured TURN relay. This package uses public STUN services only.
+CO-OP NOTES
+- Host the public HTTPS GitHub Pages URL and send the in-game invite link to your friends. The host's tab must remain open.
+- The six room settings are host-controlled once a room exists and become locked when the run starts.
+- Triple T's normal fire cooldown remains 0.5 seconds; Night Flight adds extra side-bats without changing that cooldown.
+- Direct player-to-player WebRTC connections may still fail on restrictive networks; some networks require a configured TURN relay.
