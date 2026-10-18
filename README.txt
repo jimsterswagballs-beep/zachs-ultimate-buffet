@@ -1,34 +1,26 @@
-ZACH'S ULTIMATE BUFFET — v29
+ZACH'S ULTIMATE BUFFET — v31
 
-WHAT'S NEW IN v29
-- Multiplayer: added several STUN servers for improved peer-to-peer network discovery and a CDN fallback if PeerJS does not load from unpkg.
-- Attack warnings: high-contrast dark outlines, animated yellow/white warning edges, clearer active hazard colors, and a shrinking timer ring for circular danger zones. Attack/phase callouts now sit on a dark panel with a bright border.
-- Chef Chaos: Last Stand attacks are spaced out slightly more; his signature lane/ring pattern uses fewer hazards, and his Soup Splash/Rolling Pins attacks are a little less dense.
-- The original single-player mode, music, and other bosses are retained.
+WHAT'S NEW IN v31
+- Co-op death screen: choose WAIT FOR REVIVAL / SPECTATE or LEAVE CO-OP / RETURN TO TITLE. Waiting lets you watch the boss fight, and you return with one heart after the boss is defeated.
+- Emergency team revive: if every player is down at once, the entire team is brought back with one heart and temporary invulnerability so a run cannot get stuck waiting for a boss nobody can damage.
+- Clearer multiplayer usernames and lobby roster: edit your name in the room, see each player's ready status, and see names/health during the fight. Names are saved locally.
+- Better connection feedback: join timeouts and disconnected hosts are explained, guests can retry a failed join, the PeerJS signalling connection attempts recovery, and busy data channels skip snapshots instead of building up a lagging queue. Game-state snapshots are sent at a gentler rate to improve stability.
+- Multiplayer state now includes the host player for guests, and the lobby shows clearer player/ready chips.
 
-HOW TO PLAY SINGLE-PLAYER
-1. Extract this ZIP.
-2. Keep the music folder beside game.html and index.html.
-3. Open game.html (or index.html) in a modern browser.
-4. Controls: WASD / arrow keys to move; mouse aim + hold to fire; Space, Shift, or right-click to eat nearby projectiles; Esc to pause.
+FILES
+- index.html: game entry point.
+- game.html: game.
+- music/: soundtrack used by the game. Keep this folder beside both HTML files.
 
-HOW TO MAKE MULTIPLAYER WORK FROM OTHER COMPUTERS
-The game needs to be published on a public HTTPS website first. A file:// URL, localhost URL, or private LAN address only points to a computer on that local machine/network and will not work as a shareable invite.
+HOW TO UPDATE YOUR EXISTING GITHUB PAGES SITE
+1. Extract this ZIP on your computer.
+2. Open your repository: https://github.com/jimsterswagballs-beep/zachs-ultimate-buffet
+3. Click Add file > Upload files.
+4. Drag the updated index.html, game.html, README.txt, and the whole music folder from this extracted v31 folder into the upload area. Do not drag the outer ZachsUltimateBuffet_v31 folder.
+5. Commit directly to main with a message such as "Update game to v31".
+6. GitHub Pages should redeploy automatically. Refresh the public website; if you still see the old version, use Ctrl+F5 or a private window.
 
-A simple free static-hosting option is GitHub Pages:
-1. Create a GitHub repository for the game.
-2. Upload index.html, game.html, README.txt and the entire music folder into the published root (do not leave them buried inside another folder, and do not rename the music folder).
-3. In the repository, open Settings > Pages and enable publishing from your main branch/root folder. GitHub Pages provides HTTPS for github.io sites.
-4. Open the published HTTPS site in your browser, choose Multiplayer, pick a fighter, then choose CREATE ROOM.
-5. When the room appears, choose COPY INVITE LINK and send that URL to your friends. Friends should open that exact link; it automatically joins the room. They then choose their fighter and press READY.
-6. Keep the host's browser tab open for the whole run. Closing it closes the room.
-
-NETWORK LIMITATIONS / TROUBLESHOOTING
-- Both players need internet access and the PeerJS client/service must be reachable. If PeerJS fails to load, reload or try another network/browser that does not block the CDN.
-- v29 uses multiple public STUN servers, which can improve direct connections, but this does not guarantee every network can connect. Some strict NATs, school networks, VPNs, and firewalls block direct WebRTC connections.
-- For reliable connections across restrictive networks, add a TURN relay service and its credentials to MP_PEER_OPTIONS in both HTML files. TURN credentials should not be exposed as permanent secrets in a public repository; use a provider's recommended short-lived credentials or a server you control.
-- There is no dedicated authoritative server in this project: the host's browser runs the boss-rush simulation and broadcasts game snapshots to guests. If the host closes the tab or loses connection, the room ends.
-
-Official references:
-- GitHub Pages setup: https://docs.github.com/en/pages/getting-started-with-github-pages/creating-a-github-pages-site
-- PeerJS ICE/TURN configuration and NAT caveats: https://peerjs.com/client/faq
+MULTIPLAYER NOTES
+- Host the game on the public HTTPS GitHub Pages URL and send the in-game invite link to friends. The host's browser tab must stay open.
+- If joining times out, ask the host to create a fresh room and send a new invite link.
+- The networking improvements help on common home networks, but some strict routers/firewalls still require a configured TURN relay. This package uses public STUN services only.
