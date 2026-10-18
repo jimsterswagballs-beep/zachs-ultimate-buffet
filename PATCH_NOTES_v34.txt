@@ -1,0 +1,14 @@
+ZACH'S ULTIMATE BUFFET — v34
+
+- Increased every boss's base health by 45% before the existing order/endless scaling.
+- Multiplayer boss health now scales automatically by joined player count: 1 player 1.00x, 2 players 1.75x, 3 players 2.50x, 4 players 3.25x. The host's Boss HP bonus setting multiplies this automatic scale.
+- Nerfed The Hollow King's movement/attack speed and increased attack cooldowns.
+- Added two unique attacks to each of the first six bosses, with phased unlocks.
+- Added a 0.58-second incoming-attack warning window with a target marker. Attack Warnings can be switched off in Settings.
+- Added Show Hitboxes to Settings.
+- Added a local cheat/admin panel: enter BUFFET-OVERDRIVE-777 from Settings to unlock upgrades, health, max hearts, and skip-boss buttons. This is a client-side cheat code, not a secure online admin permission.
+
+TEST NOTES
+- JavaScript syntax checked in both index.html and game.html.
+- Verified both HTML files are identical and the ZIP contains the music folder and Cartman image.
+- A real multiplayer session across separate computers has not been run in this environment.
