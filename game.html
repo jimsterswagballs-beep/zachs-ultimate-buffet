@@ -1373,7 +1373,7 @@ const top=78,gap=25;
 OPT.forEach((o,i)=>{const y=top+i*gap,ss=i===sel;X.fillStyle=ss?'#2a1b55':'#1b1236cc';X.strokeStyle=ss?'#f0b94a':'#3a2d63';X.lineWidth=1.6;X.beginPath();X.roundRect(92,y-10,616,22,7);X.fill();X.stroke();T(o[0],108,y,13,'#f1e8d6','left');T('<',350,y,16,'#f0b94a');T(o[2][SET[o[1]]],500,y,13,'#9fe8ff');T('>',650,y,16,'#f0b94a')});
 const btns=[['Back',16,150],['Keybinds',177,150],['Super FX',338,174],[SET.adminUnlocked?'ADMIN PANEL':'ADMIN CODE',522,262]];
 btns.forEach(([label,x,w],i)=>{X.fillStyle=i===3?'#4b1744':'#1b1236ee';X.strokeStyle=i===3?'#ff6c9b':'#f0b94a';X.lineWidth=1.5;X.beginPath();X.roundRect(x,542,w,34,17);X.fill();X.stroke();T(label,x+w/2,559,i===3?12:13,i===3?'#fff0f5':'#f1e8d6')});
-T('Warnings and hitboxes are client-side display options. Admin panel is a local cheat menu.',400,514,10,'#b9aecb');T('Arrow keys: select/change · ← → adjusts · Esc: back',400,590,10,'#b9aecb')}
+T('Warnings and hitboxes are client-side display options. Admin tools are local developer cheats.',400,514,10,'#b9aecb');T('Arrow keys: select/change · ← → adjusts · Esc: back',400,590,10,'#b9aecb')}
 function pauseScr(){X.fillStyle='#000b';X.fillRect(0,0,W,H);T('PAUSED',400,200,40,'#f0b94a');['Resume','Settings','Quit to Title'].forEach((m,i)=>{const y=302+i*52,h=M.x>280&&M.x<520&&Math.abs(M.y-y)<22;X.fillStyle=h?'#f0b94a':'#1b1236ee';X.strokeStyle='#f0b94a';X.lineWidth=2;X.beginPath();X.roundRect(280,y-22,240,44,22);X.fill();X.stroke();T(m,400,y,17,h?'#120c24':'#f1e8d6')})}
 function hud2(){const q=g.p,b=g.b;X.fillStyle='#0a0618cc';X.strokeStyle=b.c+'88';X.lineWidth=1.5;X.beginPath();X.roundRect(120,4,560,56,14);X.fill();X.stroke();X.beginPath();X.roundRect(8,H-50,300,42,12);X.fill();X.stroke();X.beginPath();X.roundRect(W-318,H-50,310,42,12);X.fill();X.stroke();
 X.save();X.beginPath();X.arc(92,32,26,0,PI2);X.fillStyle='#120a2a';X.fill();X.strokeStyle=b.c;X.lineWidth=3;X.stroke();X.clip();spr(SI[b.idx],92,34,44);X.restore();
@@ -1661,46 +1661,132 @@ if(SET.hb===undefined)SET.hb=0;
 OPT.push(['Attack Warnings','warn',['Off','On']],['Show Hitboxes','hb',['Off','On']]);
 saveS();
 
-// Local/client-side admin access. This is a cheat menu, not a secure server permission system.
+// Local/client-side admin access. This is a developer cheat menu, not a secure server permission system.
 const ADMIN_ACCESS_CODE='BUFFET-OVERDRIVE-777';
-let adminReturn='set';
+let adminReturn='set',adminCursor=0;
+const ADMIN_ACTIONS=[
+  ['Restore Full Health','heal'],['+1 Maximum Heart','heart'],
+  ['+5 Maximum Hearts','fivehearts'],['Grant Random Upgrade','upgrade'],
+  ['Grant 3 Random Upgrades','triple'],['Choose Specific Upgrade…','specific'],
+  ['Unlock All Upgrades','unlockall'],['Double Damage','damage'],
+  ['15s Invulnerability','invincible'],['Clear Enemy Bullets','clear'],
+  ['Skip Current Boss','skip'],['Jump To Any Boss…','jump'],
+  ['Defeat Boss (Skip Last Stand)','kill'],['Reset Boss Health','resetboss'],
+  ['Reset Ability Cooldowns','cooldowns'],['Speed + Fire Rate Boost','boost']
+];
 function adminPrompt(){
   const entered=prompt('Enter the Buffet Admin Code:');
   if(entered===null)return;
-  if(String(entered).trim()===ADMIN_ACCESS_CODE){SET.adminUnlocked=1;saveS();adminReturn='set';S='admin';toast.push(['ADMIN PANEL UNLOCKED',3]);}
+  if(String(entered).trim()===ADMIN_ACCESS_CODE){SET.adminUnlocked=1;saveS();adminReturn='set';adminCursor=0;S='admin';toast.push(['ADMIN PANEL UNLOCKED',3]);}
   else{toast.push(['Wrong admin code',2]);}
 }
-function adminCanModify(){
-  if(!g||!g.b){toast.push(['Start a run before using game cheats',2]);return false;}
-  if(MP.active&&MP.role==='guest'){toast.push(['Only the co-op host can use game cheats',2.5]);return false;}
+function adminHostAllowed(){
+  if(MP.active&&MP.role==='guest'){toast.push(['Only the co-op host can change the shared game',2.5]);return false;}
   return true;
 }
-function adminGiveRandomUpgrade(){
-  if(!adminCanModify())return;
-  const spec=U[R()*U.length|0],key=spec[0];g.u[key]=(g.u[key]||0)+1;g.n++;
-  if(key==='glass'){g.p.mh=Math.max(1,g.p.mh-1);g.p.hp=Math.min(g.p.hp,g.p.mh);g.bonus*=2;}
-  if(key==='heal'){g.p.mh++;g.p.hp=Math.min(g.p.mh,g.p.hp+2);}
-  toast.push(['ADMIN UPGRADE: '+spec[1],3]);
+function adminCanModify(){
+  if(!adminHostAllowed())return false;
+  if(!g||!g.b||!g.p){toast.push(['Start a run first, or use Jump To Any Boss',2.5]);return false;}
+  return true;
+}
+function adminGrantUpgrade(key,quiet=false){
+  if(!g||!g.p)return false;
+  const spec=U.find(q=>q[0]===key);if(!spec)return false;
+  g.u=g.u||{};g.u[key]=(Number(g.u[key])||0)+1;g.n=(Number(g.n)||0)+1;
+  if(key==='glass'){g.p.mh=Math.max(1,(Number(g.p.mh)||1)-1);g.p.hp=Math.min(g.p.hp,g.p.mh);g.bonus=Math.min(128,(Number(g.bonus)||1)*2);}
+  if(key==='heal'){g.p.mh=Math.min(30,(Number(g.p.mh)||1)+1);g.p.hp=Math.min(g.p.mh,g.p.hp+2);}
+  if(g.n>=8)ach('Professional Snacker');if(g.n>=10)ach('Living Buffet');
+  if(g.u.meteor&&g.u.chain&&!g.e1){g.e1=1;toast.push(['EVOLVED: Apocalypse Storm',4]);}
+  if(g.u.spirit&&g.u.phase&&g.u.dash&&!g.e2){g.e2=1;toast.push(['EVOLVED: Phantom Army',4]);}
+  if(!quiet)toast.push(['ADMIN UPGRADE: '+spec[1],3]);
+  return true;
+}
+function adminGiveRandomUpgrade(quiet=false){
+  if(!g||!Array.isArray(U)||!U.length)return null;
+  const spec=U[Math.floor(R()*U.length)];adminGrantUpgrade(spec[0],true);
+  if(!quiet)toast.push(['ADMIN UPGRADE: '+spec[1],3]);
+  return spec;
+}
+function adminChooseSpecificUpgrade(){
+  const menu=U.map((u,i)=>(i+1)+'. '+u[1]+' ['+u[0]+']').join('\n');
+  const raw=prompt('Enter an upgrade number, key, or exact name:\n\n'+menu,'pizza');
+  if(raw===null)return;
+  const val=String(raw).trim().toLowerCase();let spec=null;
+  if(/^\d+$/.test(val))spec=U[Number(val)-1]||null;
+  if(!spec)spec=U.find(u=>u[0].toLowerCase()===val||u[1].toLowerCase()===val)||null;
+  if(!spec){toast.push(['Unknown upgrade — try its number or key',2.5]);return;}
+  adminGrantUpgrade(spec[0]);
+}
+function adminJumpToBoss(){
+  if(!adminHostAllowed())return;
+  const raw=prompt('Jump to a boss by number or exact name.\nEnter 1-'+B.length+' or a boss name:\n\n'+B.map((b,i)=>(i+1)+'. '+b[0]).join('\n'),String(Math.min(B.length,(g?g.i+1:1))));
+  if(raw===null)return;
+  const val=String(raw).trim();let index=-1;
+  if(/^\d+$/.test(val))index=Number(val)-1;
+  else index=B.findIndex(b=>b[0].toLowerCase()===val.toLowerCase());
+  if(index<0||index>=B.length){toast.push(['Boss not found — use a listed number or exact name',2.5]);return;}
+  if(!g){
+    if(MP.active&&MP.role==='host'&&!MP.started){toast.push(['Start the co-op run before jumping to a boss',2.5]);return;}
+    newRun(index);
+  }else{g.i=index;boss();}
+  toast.push(['ADMIN: jumped to '+B[index][0],3]);
 }
 function adminAction(which){
   if(which==='close'){S='set';return;}
-  if(which==='locked'){toast.push(['Unlock the panel from Settings first',2]);return;}
+  if(which==='jump'){adminJumpToBoss();return;}
   if(!adminCanModify())return;
-  if(which==='upgrade'){adminGiveRandomUpgrade();return;}
-  if(which==='triple'){adminGiveRandomUpgrade();adminGiveRandomUpgrade();adminGiveRandomUpgrade();return;}
   if(which==='heal'){g.p.hp=g.p.mh;g.p.inv=Math.max(g.p.inv||0,1.2);em(g.p.x,g.p.y,55,{c:'#7dffb0',s:260,l:.7,r:4});toast.push(['ADMIN: health restored',2]);return;}
-  if(which==='heart'){g.p.mh=Math.min(20,g.p.mh+1);g.p.hp=Math.min(g.p.mh,g.p.hp+1);toast.push(['ADMIN: +1 maximum heart',2]);return;}
-  if(which==='skip'){g.i++;boss();toast.push(['ADMIN: boss skipped',2]);return;}
+  if(which==='heart'){g.p.mh=Math.min(30,g.p.mh+1);g.p.hp=Math.min(g.p.mh,g.p.hp+1);toast.push(['ADMIN: +1 maximum heart',2]);return;}
+  if(which==='fivehearts'){g.p.mh=Math.min(30,g.p.mh+5);g.p.hp=Math.min(g.p.mh,g.p.hp+5);toast.push(['ADMIN: +5 maximum hearts',2.5]);return;}
+  if(which==='upgrade'){adminGiveRandomUpgrade();return;}
+  if(which==='triple'){const got=[];for(let i=0;i<3;i++){const q=adminGiveRandomUpgrade(true);if(q)got.push(q[1]);}toast.push(['ADMIN: '+got.length+' upgrades granted',2.5]);return;}
+  if(which==='specific'){adminChooseSpecificUpgrade();return;}
+  if(which==='unlockall'){
+    let added=0;for(const q of U){if(!(Number(g.u&&g.u[q[0]])>0)&&adminGrantUpgrade(q[0],true))added++;}
+    toast.push(['ADMIN: unlocked '+added+' missing upgrades',3]);return;
+  }
+  if(which==='damage'){g.bonus=Math.min(128,(Number(g.bonus)||1)*2);toast.push(['ADMIN: damage multiplier x'+g.bonus.toFixed(2),2.5]);return;}
+  if(which==='invincible'){g.p.inv=Math.max(g.p.inv||0,15);ring2(g.p.x,g.p.y,'#9fe8ff',.5,460);em(g.p.x,g.p.y,35,{c:'#9fe8ff',s:230,l:.55,r:3});toast.push(['ADMIN: invulnerable for 15 seconds',2.5]);return;}
+  if(which==='clear'){const removed=(g.eb||[]).length;g.eb=[];ring2(g.p.x,g.p.y,'#9fe8ff',.35,420);em(g.p.x,g.p.y,30,{c:'#9fe8ff',s:260,l:.45,r:3});toast.push(['ADMIN: cleared '+removed+' enemy bullets',2]);return;}
+  if(which==='skip'){g.i++;boss();toast.push(['ADMIN: skipped to next boss',2]);return;}
+  if(which==='kill'){g.b.hp=0;g.b.ls=2;g.b.lst=0;g.b.inv=0;g.b.warn=null;g.b.run=null;g.eb=[];g.z=[];g.cast=['ADMIN FINISH',1.1];toast.push(['ADMIN: boss defeated instantly',2.5]);return;}
+  if(which==='resetboss'){g.b.hp=g.b.mh;g.b.ls=0;g.b.lst=0;g.b.inv=0;g.b.warn=null;g.b.run=null;g.b.cd=1;g.eb=[];g.z=[];toast.push(['ADMIN: boss health restored',2]);return;}
+  if(which==='cooldowns'){
+    g.cd=g.cd||{};for(const key of Object.keys(AB||{}))g.cd[key]=0;for(let j=0;j<3;j++)g.cd['c'+j]=0;
+    if(MP.active&&MP.role==='host')for(const pl of Object.values(MP.players||{}))if(pl)pl.abilityCd=[0,0,0];
+    toast.push(['ADMIN: ability cooldowns reset',2]);return;
+  }
+  if(which==='boost'){g.spd=Math.max(g.spd||0,15);g.ocf=Math.max(g.ocf||0,15);ring2(g.p.x,g.p.y,'#ffd24a',.35,380);toast.push(['ADMIN: speed + fire rate for 15 seconds',2.5]);return;}
 }
 function adminScr(){
-  X.save();X.globalAlpha=.96;X.fillStyle='#070411';X.fillRect(0,0,W,H);X.globalAlpha=1;
-  X.strokeStyle='#ff4d9b';X.lineWidth=3;X.strokeRect(35,22,730,556);
-  T('BUFFET ADMIN PANEL',400,55,30,'#ff6c9b');T('Code accepted · client-side cheat controls',400,83,12,'#9fe8ff');
+  X.save();X.globalAlpha=.98;X.fillStyle='#070411';X.fillRect(0,0,W,H);X.globalAlpha=1;
+  X.strokeStyle='#ff4d9b';X.lineWidth=3;X.beginPath();X.roundRect(20,15,760,570,18);X.stroke();
+  T('BUFFET ADMIN  /  DEVELOPER CONSOLE',400,43,25,'#ff6c9b');
+  T('Local cheat controls · Co-op changes require the host',400,66,11,'#9fe8ff');
+  T(g&&g.b?'RUN ACTIVE  ·  '+g.b.d[0]:'NO RUN ACTIVE  ·  Jump To Any Boss can start a run',400,86,11,g&&g.b?'#baffd6':'#ffe27a');
   const usable=!!(g&&g.b)&&!(MP.active&&MP.role==='guest');
-  if(!usable)T(MP.active&&MP.role==='guest'?'Co-op guests cannot modify the host simulation.':'Start a run first, then open this panel from Settings.',400,119,12,'#ffe27a');
-  const rows=[['Grant 1 Random Upgrade','upgrade'],['Grant 3 Random Upgrades','triple'],['Restore Full Health','heal'],['Add +1 Max Heart','heart'],['Skip Current Boss','skip'],['Return to Settings','close']];
-  rows.forEach(([label,key],i)=>{const y=157+i*65,hot=M.x>=205&&M.x<=595&&M.y>=y-19&&M.y<=y+19;X.fillStyle=hot?'#ff6c9b':'#1b1236';X.strokeStyle=i===5?'#9fe8ff':'#7b326d';X.lineWidth=2;X.beginPath();X.roundRect(205,y-20,390,40,18);X.fill();X.stroke();T(label,400,y,15,hot?'#120c24':'#fff0f5');});
-  T('Warning: this code is in the game files and can be discovered by anyone who downloads them.',400,555,10,'#b9aecb');X.restore();
+  ADMIN_ACTIONS.forEach(([label,key],i)=>{
+    const col=i%2,row=Math.floor(i/2),x=35+col*375,y=126+row*34;
+    const hovered=M.x>=x&&M.x<=x+355&&M.y>=y-14&&M.y<=y+14;
+    const selected=i===adminCursor,enabled=!(MP.active&&MP.role==='guest')&&(usable||key==='jump');
+    X.fillStyle=selected?'#ff6c9b':hovered?'#44214c':'#1b1236';
+    X.strokeStyle=selected?'#ffe1f0':hovered?'#ff9bc7':'#633260';X.lineWidth=selected?2.2:1.3;
+    X.beginPath();X.roundRect(x,y-14,355,28,9);X.fill();X.stroke();
+    T(String(i+1).padStart(2,'0')+'  '+label,x+12,y+1,12,enabled?(selected?'#170719':'#fff0f5'):'#6a5a90','left');
+  });
+  X.fillStyle='#100a22';X.strokeStyle='#8d66b8';X.lineWidth=1.5;X.beginPath();X.roundRect(32,394,736,138,12);X.fill();X.stroke();
+  T('SECRET BOSS HINTS  /  SPOILER-LIGHT LORE CLUES',48,411,12,'#ffd27a','left');
+  const hints=[
+    'HOLLOW KING — The fallen crown waits in the Underground Kingdom, beyond the first dark mirror.',
+    'CHRONOS — Watch for repeated loops and cracked moments; the keeper is tied to time itself.',
+    'LEVIATHAN PRIME — Follow the route revealed when the tide withdraws.',
+    'CRIMSON EMPEROR + FALSE HERO — The red crown and your impossible reflection guard the way to Hunger.',
+    'FORGOTTEN CREATOR — Bosses defeated without taking a hit can reward relic fragments; collect 3.',
+    'Lore tip: the relic trail is your best clue. These hints reveal story clues, not a map marker.'
+  ];
+  hints.forEach((line,i)=>T(line,48,429+i*16,10,i===4?'#baffd6':'#cfc3e6','left'));
+  X.fillStyle='#251037';X.strokeStyle='#9fe8ff';X.lineWidth=1.5;X.beginPath();X.roundRect(315,541,170,28,10);X.fill();X.stroke();T('BACK TO SETTINGS  ·  ESC',400,555,10,'#dff8ff');
+  T('Arrows: select  ·  Enter: activate  ·  Click an action to use it',400,580,10,'#9f91b7');X.restore();
 }
 const drawV34Base=draw;
 draw=function(){drawV34Base();if(S==='admin')adminScr();if(g&&SET.warn&&g.b&&g.b.warn&&S==='play'){
@@ -1709,7 +1795,7 @@ draw=function(){drawV34Base();if(S==='admin')adminScr();if(g&&SET.warn&&g.b&&g.b
   for(let i=0;i<4;i++){const a=i*PI2/4+tm*.15;X.beginPath();X.moveTo(q.x+Math.cos(a)*38,q.y+Math.sin(a)*38);X.lineTo(q.x+Math.cos(a)*29,q.y+Math.sin(a)*29);X.strokeStyle='#fff36b';X.lineWidth=3;X.stroke();}
   T('MOVE!',q.x,q.y-48,12,'#fff36b');X.restore();
 }
-if(g&&SET.hb&&['play','pause','admin'].includes(S)){
+if(g&&SET.hb&&['play','pause'].includes(S)){
  X.save();X.globalAlpha=.85;X.strokeStyle='#42ff9b';X.lineWidth=1.5;X.setLineDash([4,3]);
  const circ=(x,y,r)=>{X.beginPath();X.arc(x,y,Math.max(2,r),0,PI2);X.stroke()};
  circ(g.p.x,g.p.y,15);if(g.b)circ(g.b.x,g.b.y,g.b.sz||40);
@@ -1722,13 +1808,20 @@ const pressV34Base=press;
 press=function(k){
  if(S==='admin'){
    if(k==='escape'){adminAction('close');return;}
-   if(k==='arrowdown'){adminCursor=((adminCursor||0)+1)%6;return;}if(k==='arrowup'){adminCursor=((adminCursor||0)+5)%6;return;}
-   if(k==='enter'){adminAction(['upgrade','triple','heal','heart','skip','close'][adminCursor||0]);return;}
+   if(k==='arrowdown'){const row=Math.floor(adminCursor/2);adminCursor=((row+1)%8)*2+(adminCursor%2);return;}
+   if(k==='arrowup'){const row=Math.floor(adminCursor/2);adminCursor=((row+7)%8)*2+(adminCursor%2);return;}
+   if(k==='arrowleft'||k==='arrowright'){adminCursor=adminCursor%2?adminCursor-1:adminCursor+1;return;}
+   if(k==='enter'||k===' '){adminAction(ADMIN_ACTIONS[adminCursor][1]);return;}
    if(k==='c'){
-     const y=M.y;
-     if(y>=137&&y<177)adminAction('upgrade');else if(y>=202&&y<242)adminAction('triple');else if(y>=267&&y<307)adminAction('heal');else if(y>=332&&y<372)adminAction('heart');else if(y>=397&&y<437)adminAction('skip');else if(y>=462&&y<502)adminAction('close');
+     if(M.y>=538&&M.y<=572&&M.x>=300&&M.x<=500){adminAction('close');return;}
+     if(M.x>=30&&M.x<=770&&M.y>=112&&M.y<=382){
+       const col=M.x<400?0:1,xStart=35+col*375;
+       const row=Math.round((M.y-126)/34),index=row*2+col,center=126+row*34;
+       if(M.x>=xStart&&M.x<=xStart+355&&row>=0&&row<8&&Math.abs(M.y-center)<=14&&index>=0&&index<ADMIN_ACTIONS.length){adminCursor=index;adminAction(ADMIN_ACTIONS[index][1]);return;}
+     }
      return;
-   }return;
+   }
+   return;
  }
  if(S==='set'&&k==='c'&&M.y>535){
    if(M.x>520){if(SET.adminUnlocked){S='admin';adminReturn='set';adminCursor=0;}else adminPrompt();}
@@ -1738,7 +1831,8 @@ press=function(k){
  return pressV34Base(k);
 };
 
-
+// ---------- v44: rebuilt admin developer console ----------
+LOG.unshift(['v44 (latest)','Rebuilt the admin panel with 16 actions: health and heart grants, random/specific/all upgrades, damage and invulnerability boosts, bullet clear, boss skip/jump/instant defeat/reset, cooldown reset and timed speed/fire-rate boost. Added spoiler-light secret-boss lore hints.']);
 // ---------- v38: multiplayer parity, lighter networking, and shared visual events ----------
 function mpQueueFx(event){
   if(!MP||!MP.active||MP.role!=='host'||!MP.started||!event)return;
