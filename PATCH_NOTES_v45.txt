@@ -1,0 +1,20 @@
+Zach's Ultimate Buffet v45 — Prime Max Secret Character
+
+NEW SECRET FIGHTER: PRIME MAX
+- Unlock Prime Max from the Admin Panel using “Unlock Secret Character: Prime Max”.
+- The unlock is saved in local settings and Prime Max becomes selectable in solo and co-op lobbies.
+- New Prime Max sprite: cosmic-white outfit, black sunglasses, gold accents and a prismatic aura.
+- Overpowered stats: +3 starting hearts, 1.38× movement speed, 3.5× damage stat and extra starting multi/rate/pierce/crit/speed upgrades.
+- Basic attack: five fast prismatic shots per volley, with a chance of an extra white prism shot.
+- Passive: his aura annihilates bullets around him and heavily damages nearby bosses; Beyond Infinity expands the aura and ramps up damage.
+- Absolute Prism: an enormous, high-damage sunglasses laser.
+- Event Horizon: clears nearby bullets, restores two hearts, grants brief invulnerability, damages the boss and emits a radial nova.
+- Beyond Infinity: a 14-second powered state with a larger/faster aura and extra protection.
+- Multiplayer host-authoritative ability handling, remote aura support, synchronized visual effects and Prime Max's powered-state timer are included.
+- Both solo fighter selection and co-op lobby fit the seventh character; the card stays hidden until admin unlock.
+
+INSTALL
+Replace both index.html and game.html in the existing GitHub Pages repository; keep cartman.png and the music folder beside them. Commit to main and hard-refresh both devices after deployment.
+
+NOTE
+JavaScript syntax and archive checks pass. Live multiplayer across separate devices still needs a real-world playtest. The admin unlock code is a local client-side developer tool, not secure server authentication.

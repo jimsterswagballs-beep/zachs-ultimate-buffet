@@ -1,0 +1,21 @@
+Zach's Ultimate Buffet v46 — Co-op Movement Fix + Admin Deck Remake
+
+MULTIPLAYER MOVEMENT
+- Added a separate lightweight movement channel (separate from full game snapshots) for guest input and position state.
+- Host broadcasts the visible player roster at approximately 30 Hz; guest screens interpolate remote player and host-avatar positions using the fast movement stream.
+- Guest movement/aim input uses the lightweight channel when connected. Main-channel inputs remain as a fallback and cannot overwrite a newer motion-channel input.
+- Capped only remote-render snapshot entity lists under heavy projectile load; the host's authoritative simulation is unchanged.
+- Added a Multiplayer Network Status admin action to inspect main/motion channel counts, snapshot skips, and queued data.
+
+ADMIN PANEL REMAKE
+- Replaced the old long two-column list with a redesigned admin dashboard and five tabs: Player, Upgrades, Boss Lab, Tools, Secrets.
+- Preserved the existing cheat actions and Prime Max unlock; added Multiplayer Network Status.
+- A host's Prime Max unlock is shared with current co-op guests so the secret fighter can be selected in that room; guests do not get a permanent local unlock from this share.
+- Preserved secret-boss hints for Hollow King, Chronos, Leviathan Prime, Crimson Emperor / False Hero, and Forgotten Creator.
+- Keyboard: Left/Right changes tabs, Up/Down selects actions, Enter activates, Esc returns to settings. Click tabs/actions directly.
+
+INSTALL
+Replace index.html and game.html in the existing GitHub Pages repository. Keep cartman.png and the music folder alongside them. Commit to main and hard-refresh both devices after deployment.
+
+TEST NOTE
+JavaScript syntax and ZIP integrity checks are included in packaging validation. A real two-device multiplayer test is still needed; home network/NAT conditions can affect PeerJS connections, and the movement channel falls back to the main channel if it cannot open. Admin access is a client-side developer tool, not secure server authentication.

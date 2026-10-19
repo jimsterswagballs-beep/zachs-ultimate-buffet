@@ -789,6 +789,22 @@ function mpCreate(){
   });
   MP.peer.on('disconnected',()=>{mpSetStatus('Room-service connection interrupted; trying to reconnect…');try{if(MP.peer&&!MP.peer.destroyed)MP.peer.reconnect()}catch(e){}});
   MP.peer.on('connection',conn=>{
+    // v46: a separate small movement channel keeps player motion responsive even while
+    // large full-game snapshots are back-pressured on the main reliable channel.
+    if(conn&&conn.metadata&&conn.metadata.kind==='zub-motion'){
+      if(!MP.motionConnections)MP.motionConnections=new Map();
+      MP.motionConnections.set(conn.peer,conn);
+      conn.on('data',msg=>{
+        if(!msg||msg.type!=='motionInput')return;
+        const pl=MP.players&&MP.players[conn.peer];if(!pl)return;
+        const seq=Number(msg.seq)||0;if(seq&&seq<=Number(pl.motionInputSeq||0))return;
+        pl.motionInputSeq=seq;pl.lastMotionInputAt=tm;
+        pl.input=zubNormalizeMotionInput(msg,pl.input);
+      });
+      conn.on('close',()=>{if(MP.motionConnections)MP.motionConnections.delete(conn.peer);});
+      conn.on('error',()=>{if(MP.motionConnections)MP.motionConnections.delete(conn.peer);});
+      return;
+    }
     MP.connections.set(conn.peer,conn);
     conn.on('open',()=>{
       if(Object.keys(MP.players).length>=Math.max(1,Number(MP.settings.maxPlayers)||4)-1){mpSetStatus('Room is full ('+MP.settings.maxPlayers+' player limit).');mpSend(conn,{type:'roomFull'});setTimeout(()=>{try{conn.close()}catch(e){}},1200);return}
@@ -798,7 +814,7 @@ function mpCreate(){
       mpSetStatus('Room is open. Waiting for everyone to choose a fighter and ready up.');mpBroadcastLobby();
     });
     conn.on('data',data=>mpHostMessage(conn,data));
-    conn.on('close',()=>{MP.connections.delete(conn.peer);delete MP.players[conn.peer];delete MP.upgradeVotes[conn.peer];mpBroadcastLobby()});
+    conn.on('close',()=>{MP.connections.delete(conn.peer);const motion=MP.motionConnections&&MP.motionConnections.get(conn.peer);if(motion){try{motion.close()}catch(e){}MP.motionConnections.delete(conn.peer);}delete MP.players[conn.peer];delete MP.upgradeVotes[conn.peer];mpBroadcastLobby()});
     conn.on('error',e=>{mpSetStatus('A player connection had a problem: '+(e&&e.type||'network error'));});
   });
   MP.peer.on('error',e=>{MP.connectionFailed=true;mpSetStatus('Room connection error: '+(e&&e.type||'network error')+'. Check your internet connection and try creating the room again.');});
@@ -810,7 +826,7 @@ function mpJoin(roomId){
   try{MP.peer=new Peer(undefined,MP_PEER_OPTIONS);}catch(e){MP.connectionFailed=true;MP.status='Could not connect: '+e.message;return}
   MP.peer.on('open',()=>{
     MP.connectingAt=tm;MP.conn=MP.peer.connect(roomId,{reliable:true,metadata:{char:mpCharIndex(SEL,0),name:MP.name}});
-    MP.conn.on('open',()=>{MP.connectionFailed=false;MP.connectingAt=tm;MP.lastRxAt=tm;MP.netLag=false;MP.status='Connected. Choose your fighter and press READY.';mpSend(MP.conn,{type:'setName',name:MP.name});mpSend(MP.conn,{type:'select',char:SEL});});
+    MP.conn.on('open',()=>{MP.connectionFailed=false;MP.connectingAt=tm;MP.lastRxAt=tm;MP.netLag=false;MP.status='Connected. Choose your fighter and press READY.';mpSend(MP.conn,{type:'setName',name:MP.name});mpSend(MP.conn,{type:'select',char:SEL});zubOpenMotionConnection();});
     MP.conn.on('data',data=>mpGuestMessage(data));
     MP.conn.on('close',()=>{MP.started=false;MP.connectionFailed=true;MP.localDown=false;MP.waiting=false;g=null;MP.status=MP.roomFull?'This room is full. Ask the host to raise the player limit or create another room.':'Disconnected from the host. Check that the host still has the game open, then retry.';MP.roomFull=false;S='mplobby';});
     MP.conn.on('error',e=>{MP.connectionFailed=true;MP.status='Could not connect to the room: '+(e&&e.type||'network error')+'. Check the invite link or try again.';});
@@ -831,7 +847,9 @@ function mpHostMessage(conn,msg){
     const readyChar=Number(msg.char);if(Number.isInteger(readyChar)&&readyChar>=0&&readyChar<CHS.length&&pl.char!==readyChar){pl.char=readyChar;pl.maxHp=((MP.active&&MP.settings&&MP.settings.startHearts)||([4,3,2][SET.diff]||4))+CHB[pl.char][0];pl.hp=pl.maxHp;pl.down=0;}
     pl.ready=!!msg.ready;mpBroadcastLobby();
   }else if(msg.type==='input'){
-    pl.input={left:!!msg.left,right:!!msg.right,up:!!msg.up,down:!!msg.down,fire:!!msg.fire,eat:!!msg.eat,autoFire:!!msg.autoFire,aimX:Number.isFinite(Number(msg.aimX))?Math.max(0,Math.min(W,Number(msg.aimX))):400,aimY:Number.isFinite(Number(msg.aimY))?Math.max(0,Math.min(H,Number(msg.aimY))):300,aimBoss:!!msg.aimBoss};
+    // Main-channel input remains as a fallback, but cannot roll back a newer movement
+    // packet that arrived through the dedicated motion channel.
+    if(!(pl.lastMotionInputAt&&tm-pl.lastMotionInputAt<.28))pl.input=zubNormalizeMotionInput(msg,pl.input);
   }else if(msg.type==='ability'){
     const j=Number(msg.index);if(Number.isInteger(j)&&j>=0&&j<3&&pl.abilityQueue.length<3)pl.abilityQueue.push(j);
   }else if(msg.type==='advance'&&S==='dlg')next();
@@ -979,10 +997,13 @@ function mpTick(){
     // Do not JSON-clone the live simulation if every guest has disconnected.
     if(!recipients.length)return;
     let copy=null;
-    try{copy=JSON.parse(JSON.stringify(g,(k,v)=>(k==='dl'||k==='hist')?[]:(typeof v==='function'?undefined:v)))}catch(e){console.warn('Snapshot failed',e)}
+    try{copy=JSON.parse(JSON.stringify(g,(k,v)=>{if(k==='dl'||k==='hist')return [];if(typeof v==='function')return undefined;const caps={pb:240,eb:280,z:90,tr:72,holes:72,ai:64,sc:48,rays:40,dn:40};const cap=caps[k];return cap&&Array.isArray(v)&&v.length>cap?v.slice(-cap):v;}))}catch(e){console.warn('Snapshot failed',e)}
     if(copy){
-      const host={id:'host',name:MP.name,char:mpCharIndex(SEL,0),ready:true,isHost:true,x:g&&g.p?g.p.x:400,y:g&&g.p?g.p.y:500,hp:MP.localDown?0:(g&&g.p?g.p.hp:1),maxHp:g&&g.p?g.p.mh:3,inv:g&&g.p?g.p.inv:0,down:MP.localDown?1:0,boost:0,abilityCd:[0,0,0]};
-      const packet={type:'state',seq:++MP.stateSeq,screen:S,game:copy,upgradeVote:mpUpgradeVoteView(),hostChar:SEL,players:[host,...mpRoster().map(p=>{const q=MP.players[p.id]||{};return {...p,x:q.x||400,y:q.y||500,hp:q.hp??3,maxHp:q.maxHp??3,inv:q.inv||0,down:q.down||0,boost:q.boost||0,maxAuraBoost:q.maxAuraBoost||0,maxAuraCd:q.maxAuraCd||0,abilityCd:Array.isArray(q.abilityCd)?q.abilityCd.slice():[0,0,0]}})],music:{track:mCur,time:mA&&Number.isFinite(mA.currentTime)?mA.currentTime:0,paused:!!(mA&&mA.paused)}};
+      // Remote screens need the newest, visually-relevant entities, not unbounded stale arrays.
+      // The authoritative host's live simulation is untouched; only the display snapshot is capped.
+      for(const [key,max] of Object.entries({pb:240,eb:280,z:90,tr:72,holes:72,ai:64,sc:48,rays:40,dn:40}))if(Array.isArray(copy[key])&&copy[key].length>max)copy[key]=copy[key].slice(-max);
+      const host={id:'host',name:MP.name,char:mpCharIndex(SEL,0),ready:true,isHost:true,x:g&&g.p?g.p.x:400,y:g&&g.p?g.p.y:500,hp:MP.localDown?0:(g&&g.p?g.p.hp:1),maxHp:g&&g.p?g.p.mh:3,inv:g&&g.p?g.p.inv:0,down:MP.localDown?1:0,boost:0,primeMaxBoost:g&&g.p?g.p.primeMaxBoost||0:0,abilityCd:[0,0,0]};
+      const packet={type:'state',seq:++MP.stateSeq,screen:S,game:copy,upgradeVote:mpUpgradeVoteView(),hostChar:SEL,players:[host,...mpRoster().map(p=>{const q=MP.players[p.id]||{};return {...p,x:q.x||400,y:q.y||500,hp:q.hp??3,maxHp:q.maxHp??3,inv:q.inv||0,down:q.down||0,boost:q.boost||0,maxAuraBoost:q.maxAuraBoost||0,maxAuraCd:q.maxAuraCd||0,primeMaxBoost:q.primeMaxBoost||0,abilityCd:Array.isArray(q.abilityCd)?q.abilityCd.slice():[0,0,0]}})],music:{track:mCur,time:mA&&Number.isFinite(mA.currentTime)?mA.currentTime:0,paused:!!(mA&&mA.paused)}};
       let skipped=0;
       for(const c of recipients){
         // Full snapshots supersede older state. Keep the ordered/reliable channel from accumulating
@@ -999,7 +1020,7 @@ function mpTick(){
   }
 }
 function mpLobbyScr(){
-  const pulse=.5+.5*Math.sin(tm*2.1),accent=['#ffb84d','#7dffb0','#b57bff','#2ec4b6','#ff7eb6','#68f4ff'];
+  const pulse=.5+.5*Math.sin(tm*2.1),accent=['#ffb84d','#7dffb0','#b57bff','#2ec4b6','#ff7eb6','#68f4ff','#fff3b0'];
   // Animated midnight backdrop with restrained stars and buffet-gold guide lines.
   const back=X.createLinearGradient(0,0,W,H);back.addColorStop(0,'#09091b');back.addColorStop(.52,'#181035');back.addColorStop(1,'#080a19');X.fillStyle=back;X.fillRect(0,0,W,H);
   const glow=X.createRadialGradient(400,150,20,400,150,430);glow.addColorStop(0,'#7b2cff24');glow.addColorStop(1,'#7b2cff00');X.fillStyle=glow;X.fillRect(0,0,W,H);
@@ -1015,8 +1036,8 @@ function mpLobbyScr(){
   X.fillStyle=connected?'#12352c':'#2b1a32';X.strokeStyle=connected?'#7dffb0':MP.connectionFailed?'#ff7b91':'#79649e';X.lineWidth=1.2;X.beginPath();X.roundRect(642,25,128,29,14);X.fill();X.stroke();
   ball(655,39.5,3.5,connected?'#baffd6':'#ff9dba',connected?'#36ba83':'#a8325c');T(pillText,706,40,9,connected?'#baffd6':'#ffd0df');
   // Five fighter cards: selected card gets a brighter portrait halo and clearer stats.
-  CHS.forEach((c,i)=>{
-    const x=18+i*129,y=98,w=121,h=220,selected=i===SEL,hover=M.x>x&&M.x<x+w&&M.y>98&&M.y<318,col=accent[i];
+  CHS.slice(0,zubCharacterCount()).forEach((c,i)=>{
+    const x=17+i*110,y=98,w=103,h=220,selected=i===SEL,hover=M.x>x&&M.x<x+w&&M.y>98&&M.y<318,col=accent[i];
     const card=X.createLinearGradient(x,y,x+w,y+h);card.addColorStop(0,selected?'#30204f':'#17132d');card.addColorStop(1,selected?'#18112f':'#0e1022');
     X.fillStyle=card;X.strokeStyle=selected?'#f0b94a':hover?'#9fe8ff':'#493962';X.lineWidth=selected?2.7:1.2;X.beginPath();X.roundRect(x,y+(selected?-2:0),w,h,12);X.fill();X.stroke();
     X.fillStyle=col;X.globalAlpha=selected?.95:.48;X.beginPath();X.roundRect(x+10,y+10,w-20,3,2);X.fill();X.globalAlpha=1;
@@ -1029,7 +1050,7 @@ function mpLobbyScr(){
     T('SIGNATURE MOVE',x+w/2,y+184,7,col);T(String(CAB[i][0][0]||'Signature move').slice(0,19),x+w/2,y+197,8,'#e8dff6');
     X.fillStyle=selected?'#f0b94a':hover?'#28415b':'#211937';X.beginPath();X.roundRect(x+17,y+204,w-34,11,5);X.fill();T(selected?'SELECTED':'CLICK TO SELECT',x+w/2,y+210,7,selected?'#160d29':'#c9bfe0');
   });
-  T('CHOOSE YOUR FIGHTER  ·  KEYS 1–6 OR ← → ALSO WORK',400,329,10,'#e3d8f2');
+  T('CHOOSE YOUR FIGHTER  ·  KEYS 1–'+zubCharacterCount()+' OR ← → ALSO WORK',400,329,10,'#e3d8f2');
   // Quick actions are positioned to preserve the existing mouse/keyboard hit targets.
   const quick=(label,x,y,w,color)=>{const hot=M.x>=x&&M.x<=x+w&&M.y>=y&&M.y<=y+29;X.fillStyle=hot?'#34234e':'#15112b';X.strokeStyle=hot?color:'#56416f';X.lineWidth=1.2;X.beginPath();X.roundRect(x,y,w,29,14);X.fill();X.stroke();T(label,x+w/2,y+15,10,hot?'#fff1bd':color)};
   quick('EDIT NAME  ·  '+MP.name.slice(0,12),185,346,255,'#ffe27a');quick('ROOM SETTINGS',454,346,190,'#9fe8ff');
@@ -2411,7 +2432,7 @@ function zubDrawAbilityFx(){
   X.save();X.globalCompositeOperation='lighter';
   for(const f of g.zubAbilityFx){
     if(!f||!Number.isFinite(Number(f.t))||f.t<=0)continue;
-    const p=Math.max(0,Math.min(1,1-f.t/(f.life||1))),fade=Math.max(0,1-p),ch=Math.max(0,Math.min(5,Number(f.char)||0)),j=Math.max(0,Math.min(2,Number(f.ability)||0)),pal=ZUB_FX_PALETTES[ch],c1=pal[0],c2=pal[1],c3=pal[2];
+    const p=Math.max(0,Math.min(1,1-f.t/(f.life||1))),fade=Math.max(0,1-p),ch=Math.max(0,Math.min(6,Number(f.char)||0)),j=Math.max(0,Math.min(2,Number(f.ability)||0)),pal=ZUB_FX_PALETTES[ch],c1=pal[0],c2=pal[1],c3=pal[2];
     const x=Number(f.ex)||0,y=Number(f.ey)||0,bx=Number(f.bx)||x,by=Number(f.by)||y,ang=Number(f.angle)||0,base=24+p*105;
     X.globalAlpha=.16*fade;const glow=X.createRadialGradient(x,y,2,x,y,base+35);glow.addColorStop(0,c1+'aa');glow.addColorStop(.6,c2+'33');glow.addColorStop(1,c1+'00');X.fillStyle=glow;X.beginPath();X.arc(x,y,base+35,0,PI2);X.fill();
     zubArc(x,y,base,c1,-Math.PI*.15+p*1.2,Math.PI*1.25+p*1.2,3,fade*.82);zubArc(x,y,base*.72,c2,Math.PI+p*1.4,PI2+Math.PI+p*1.4,2,fade*.68);
@@ -2478,4 +2499,506 @@ CHS[2]=['Triple T','Baseball slugger','Power swings, grand slams,|and a Walk-Off
 CHD[2]='Triple T is a baseballer who wields a wooden bat, wears a pinstriped uniform, and attacks with stitched baseballs. Dugout Dash is a charging power swing, Grand Slam swats away nearby pitches and sends a barrage, and Walk-Off Mode adds extra baseballs for seven seconds.';
 CABD[2]=['Dash toward the boss with a powerful bat swing and a spread of line-drive baseballs.','Sweep the bat in a Grand Slam, knocking away nearby enemy pitches and firing a nine-ball barrage.','For 7 seconds, every basic attack gains two extra stitched baseballs. A Walk-Off power-up.'];
 LOG.unshift(['v43 (latest)','Corrected Triple T to a true baseballer: baseball cap and pinstriped uniform, clearly visible wooden bat, stitched baseball projectiles, Dugout Dash, Grand Slam and Walk-Off Mode. Replaced fantasy bat-creature visuals in his ability FX and synchronized baseball projectiles for multiplayer guests.']);
+
+
+// ---------- v45: Prime Max secret character + admin unlock ----------
+// Prime Max stays in the fighter data tables in every build so multiplayer snapshots
+// understand character index 6, but selection is gated by a saved admin unlock.
+SPR.push(()=>{
+  const pulse=.5+.5*Math.sin(tm*8),spin=tm*.7;
+  X.save();X.globalCompositeOperation='lighter';
+  const aura=X.createRadialGradient(0,0,4,0,0,57);aura.addColorStop(0,'#fff3b088');aura.addColorStop(.4,'#65f4ff44');aura.addColorStop(.75,'#b57bff22');aura.addColorStop(1,'#65f4ff00');X.fillStyle=aura;X.beginPath();X.arc(0,0,57+pulse*4,0,PI2);X.fill();
+  for(let i=0;i<4;i++){X.strokeStyle=['#fff3b0','#65f4ff','#b57bff','#ffffff'][i];X.globalAlpha=.42-i*.055;X.lineWidth=1.5+i*.25;X.beginPath();X.ellipse(0,1,29+i*6,35+i*4,spin+i*.72,0,PI2);X.stroke();}
+  for(let i=0;i<8;i++){const a=spin*1.9+i*PI2/8,r=38+Math.sin(tm*5+i)*3;zubStar(Math.cos(a)*r,Math.sin(a)*r*.76,3.5,i%2?'#fff3b0':'#65f4ff',a, .85);}
+  X.restore();
+  // Cosmic-white coat/hoodie, gold trim, and Max's unmistakable sunglasses.
+  rr(-17,2,34,27,'#eeeefb',8);rr(-13,5,26,17,'#242044',4);rr(-4,6,8,12,'#65f4ff',2);rr(-18,4,5,19,'#fff3b0',2);rr(13,4,5,19,'#fff3b0',2);
+  ball(0,-7,14,'#edc5a3','#ac7964');poly('#ecebff',-15,-7,-14,-20,-6,-18,0,-26,7,-18,14,-21,16,-5,9,-12,0,-14,-9,-10);
+  poly('#fff3b0',-11,-18,-7,-29,0,-23,7,-29,11,-18,6,-20,0,-18,-6,-20);
+  rr(-13,-11,12,8,'#101322',2);rr(1,-11,12,8,'#101322',2);rr(-2,-9,4,3,'#fff3b0',1);
+  X.strokeStyle='#fff3b0';X.lineWidth=2;X.beginPath();X.moveTo(-10,-9);X.lineTo(-5,-5);X.moveTo(4,-9);X.lineTo(9,-5);X.stroke();
+  X.strokeStyle='#8a4a54';X.lineWidth=1.8;X.beginPath();X.moveTo(-5,2);X.quadraticCurveTo(0,5,6,1);X.stroke();
+  rr(-8,22,6,7,'#fff3b0',2);rr(2,22,6,7,'#fff3b0',2);
+});
+CI.push(23);
+CHS.push(['Prime Max','Beyond Godmode','An absurdly powered-up Max.|Unlocked in the admin panel.']);
+CHD.push('Prime Max is Max beyond his limit: a prismatic annihilation aura, gigantic sunglasses laser, arena-clearing singularity and a temporary Beyond Infinity form. Secret character unlocked through the admin panel.');
+CHB.push([3,1.38,1.65,3.5,{multi:2,rate:3,pierce:2,crit:2,speed:2}]);
+CABD.push([
+  'Fires an enormous prismatic beam that deals catastrophic damage to anything in its path.',
+  'Creates an event horizon: erases nearby bullets, restores two hearts and fires a radial nova.',
+  'Enters Beyond Infinity for 14 seconds: much stronger aura, bullet annihilation and extra protection.'
+]);
+CAB[6]=[
+  ['Absolute Prism',8,'#fff3b0',()=>{primeMaxAbility(g.p,0,'host')}],
+  ['Event Horizon',14,'#b57bff',()=>{primeMaxAbility(g.p,1,'host')}],
+  ['Beyond Infinity',26,'#65f4ff',()=>{primeMaxAbility(g.p,2,'host')}]
+];
+
+function zubCharacterCount(){return (SET&&SET.primeMaxUnlocked||MP&&MP.primeMaxAvailable)?CHS.length:Math.max(0,CHS.length-1)}
+function zubCharacterRect(i,screen='csel'){
+  if(!Number.isInteger(i)||i<0||i>=zubCharacterCount())return null;
+  if(screen==='mplobby')return{x:17+i*110,y:98,w:103,h:220};
+  const total=zubCharacterCount(),row=Math.floor(i/4),col=i%4,rowCount=Math.min(4,total-row*4),offset=(4-rowCount)*(192/2);
+  return{x:22+offset+col*192,y:66+row*156,w:180,h:151};
+}
+if(!SET.primeMaxUnlocked&&SEL===6){SEL=0;SET.ch=0;saveS();}
+
+// Admin is local developer tooling, but guests cannot mutate the shared co-op session.
+ADMIN_ACTIONS.push(['Unlock Secret Character: Prime Max','prime']);
+const _zubAdminActionV45=adminAction;
+adminAction=function(which){
+  if(which==='prime'){
+    if(!adminHostAllowed())return;
+    SET.primeMaxUnlocked=1;SET.ch=6;SEL=6;saveS();
+    if(MP.active&&MP.role==='host'&&!MP.started){MP.localChar=6;MP.hostChar=6;mpBroadcastLobby();}
+    toast.push(['SECRET UNLOCKED: PRIME MAX — selected for your next run',4]);
+    return;
+  }
+  return _zubAdminActionV45(which);
+};
+
+adminScr=function(){
+  X.save();X.globalAlpha=.99;X.fillStyle='#070411';X.fillRect(0,0,W,H);X.globalAlpha=1;
+  X.strokeStyle='#ff4d9b';X.lineWidth=3;X.beginPath();X.roundRect(20,15,760,570,18);X.stroke();
+  T('BUFFET ADMIN  /  DEVELOPER CONSOLE',400,40,24,'#ff6c9b');
+  T('16+ cheat controls · Host/local save only · Prime Max is a secret unlock',400,62,10,'#9fe8ff');
+  T(g&&g.b?'RUN ACTIVE  ·  '+g.b.d[0]:'NO RUN ACTIVE  ·  Boss jumping can start a run',400,81,10,g&&g.b?'#baffd6':'#ffe27a');
+  const rows=Math.ceil(ADMIN_ACTIONS.length/2),usable=!!(g&&g.b)&&!(MP.active&&MP.role==='guest');
+  ADMIN_ACTIONS.forEach(([label,key],i)=>{
+    const col=i%2,row=Math.floor(i/2),x=35+col*375,y=119+row*28;
+    const hovered=M.x>=x&&M.x<=x+355&&M.y>=y-12&&M.y<=y+12,selected=i===adminCursor;
+    const enabled=!(MP.active&&MP.role==='guest')&&(usable||key==='jump'||key==='prime');
+    X.fillStyle=selected?'#ff6c9b':hovered?'#44214c':'#1b1236';X.strokeStyle=selected?'#ffe1f0':hovered?'#ff9bc7':'#633260';X.lineWidth=selected?2:1;
+    X.beginPath();X.roundRect(x,y-12,355,24,7);X.fill();X.stroke();
+    T(String(i+1).padStart(2,'0')+'  '+label,x+11,y+1,11.2,enabled?(selected?'#170719':'#fff0f5'):'#6a5a90','left');
+  });
+  X.fillStyle='#100a22';X.strokeStyle='#8d66b8';X.lineWidth=1.5;X.beginPath();X.roundRect(32,377,736,151,12);X.fill();X.stroke();
+  T('SECRET BOSS HINTS  /  SPOILER-LIGHT LORE CLUES',48,392,11.5,'#ffd27a','left');
+  const hints=[
+    'HOLLOW KING — The fallen crown waits in the Underground Kingdom, beyond the first dark mirror.',
+    'CHRONOS — Watch for repeated loops and cracked moments; the keeper is tied to time itself.',
+    'LEVIATHAN PRIME — Follow the route revealed when the tide withdraws.',
+    'CRIMSON EMPEROR + FALSE HERO — The red crown and your impossible reflection guard the way to Hunger.',
+    'FORGOTTEN CREATOR — Bosses defeated without a hit can reward relic fragments; collect 3.',
+    SET.primeMaxUnlocked?'SECRET CHARACTER — PRIME MAX IS UNLOCKED. Pick him from the fighter screen.':'SECRET CHARACTER — Unlock PRIME MAX with the final admin action; then choose him on the fighter screen.'
+  ];
+  hints.forEach((line,i)=>T(line,48,409+i*15,9.2,i===5?'#baffd6':'#cfc3e6','left'));
+  X.fillStyle='#251037';X.strokeStyle='#9fe8ff';X.lineWidth=1.5;X.beginPath();X.roundRect(315,539,170,27,9);X.fill();X.stroke();T('BACK TO SETTINGS  ·  ESC',400,552,9.5,'#dff8ff');
+  T('Arrows: select  ·  Enter: activate  ·  Click an action to use it',400,579,9.5,'#9f91b7');X.restore();
+};
+
+// Prime Max shots: five huge, fast prismatic rounds per volley.
+const _zubChAtkPrimeBase=chAtk;
+chAtk=function(a0,dm,n){
+  if(!g||!g.p||mpCharIndex(g.pc,0)!==6)return _zubChAtkPrimeBase(a0,dm,n);
+  const p=g.p,remote=!!p.id;
+  for(let i=-2;i<=2;i++){
+    const a=a0+i*.095+(R()-.5)*.025,mult=(i===0?2.25:1.55)*(remote?.88:1);
+    sh(p.x,p.y,a,780,dm*mult,{big:1,mega:i===0,lf:3.4,c:i===0?'#fff3b0':i%2?'#65f4ff':'#b57bff',ownerChar:6,primePrism:1,rot:tm*5+i});
+  }
+  if(R()<.35){const a=a0+(R()-.5)*.14;sh(p.x,p.y,a,900,dm*1.8,{big:1,lf:2.6,c:'#ffffff',ownerChar:6,primePrism:1});}
+};
+
+function primeAimForPlayer(p,ownerId){
+  if(ownerId==='host')return (SET.aa||M.t)?Math.atan2(g.b.y-p.y,g.b.x-p.x):Math.atan2(M.y-(p.y-7),M.x-p.x);
+  const input=p&&p.input||{};
+  if(input.aimBoss||!Number.isFinite(Number(input.aimX))||!Number.isFinite(Number(input.aimY)))return Math.atan2(g.b.y-p.y,g.b.x-p.x);
+  return Math.atan2(Number(input.aimY)-(p.y-7),Number(input.aimX)-p.x);
+}
+function primeFireLaser(p,a,ownerId){
+  if(!g||!g.b||!p)return false;
+  if(!Array.isArray(g.primeLasers))g.primeLasers=[];
+  const ox=Number(p.x)||0,oy=(Number(p.y)||0)-7,dx=Math.cos(a),dy=Math.sin(a);
+  g.primeLasers.push({x:ox,y:oy,a,t:.52,life:.52,ownerId:ownerId||'host'});if(g.primeLasers.length>8)g.primeLasers.splice(0,g.primeLasers.length-8);
+  const b=g.b,vx=b.x-ox,vy=b.y-oy,along=vx*dx+vy*dy,side=Math.abs(vx*dy-vy*dx);
+  if(b.inv<=0&&b.ls!==1&&along>0&&along<1250&&side<(Number(b.sz)||40)*1.35+35){
+    b.hp-=3200*CHB[6][3]*(g.bonus||1);b.hit=.24;fxHitB(b.x,b.y);ring2(b.x,b.y,'#fff3b0',.55,650);ring2(b.x,b.y,'#65f4ff',.3,480);em(b.x,b.y,60,{c:'#fff3b0',s:460,l:.7,r:5});g.shake=Math.max(g.shake||0,.9);
+  }
+  ring2(ox,oy,'#fff3b0',.45,350);em(ox,oy,40,{c:'#65f4ff',s:420,l:.55,r:4});g.cast=['ABSOLUTE PRISM — REALITY PIERCED',1.3];sfx('cast');return true;
+}
+function primeMaxAbility(p,j,ownerId){
+  if(!g||!g.b||!p)return false;
+  if(j===0){primeFireLaser(p,primeAimForPlayer(p,ownerId),ownerId);return true;}
+  if(j===1){
+    let removed=0;g.eb=(g.eb||[]).filter(e=>{if(Math.hypot(e.x-p.x,e.y-p.y)<315){removed++;return false;}return true;});
+    const maxHp=Number(p.maxHp)||Number(p.mh)||4;p.hp=Math.min(maxHp,(Number(p.hp)||0)+2);p.inv=Math.max(Number(p.inv)||0,2.4);
+    if(g.b.inv<=0&&g.b.ls!==1)g.b.hp-=2400*CHB[6][3]*(g.bonus||1);
+    for(let i=0;i<18;i++){const a=i*PI2/18;g.pb.push({x:p.x+Math.cos(a)*18,y:p.y+Math.sin(a)*18,vx:Math.cos(a)*620,vy:Math.sin(a)*620,d:300*CHB[6][3]*(g.bonus||1),lf:3.5,big:1,mega:i%3===0,hit:0,c:i%3===0?'#fff3b0':i%2?'#65f4ff':'#b57bff',ownerId:ownerId||'host',ownerChar:6,remote:ownerId!=='host',primePrism:1});}
+    if(!Array.isArray(g.primeBursts))g.primeBursts=[];g.primeBursts.push({x:p.x,y:p.y,t:.9,life:.9,color:'#fff3b0',ownerId:ownerId||'host'});if(g.primeBursts.length>8)g.primeBursts.shift();
+    ring2(p.x,p.y,'#fff3b0',.72,900);ring2(p.x,p.y,'#65f4ff',.44,670);ring2(p.x,p.y,'#b57bff',.26,440);em(p.x,p.y,90,{c:'#fff3b0',s:520,l:.85,r:5});g.shake=Math.max(g.shake||0,1);g.cast=['EVENT HORIZON — '+removed+' PROJECTILES ERASED  /  +2 HEARTS',1.6];sfx('cast');return true;
+  }
+  p.primeMaxBoost=14;p.maxAuraBoost=14;p.maxAuraCd=0;p.inv=Math.max(Number(p.inv)||0,3.2);p.boost=Math.max(Number(p.boost)||0,14);
+  if(!Array.isArray(g.primeBursts))g.primeBursts=[];g.primeBursts.push({x:p.x,y:p.y,t:1.15,life:1.15,color:'#65f4ff',ownerId:ownerId||'host'});if(g.primeBursts.length>8)g.primeBursts.shift();
+  ring2(p.x,p.y,'#fff3b0',.7,1000);ring2(p.x,p.y,'#65f4ff',.45,760);ring2(p.x,p.y,'#b57bff',.32,520);em(p.x,p.y,100,{c:'#65f4ff',s:570,l:1,r:5});g.cast=['BEYOND INFINITY — AURA ANNIHILATION ONLINE',1.8];sfx('cast');return true;
+}
+function primeAuraTick(p,dt){
+  if(!g||!g.b||!p||!Number.isFinite(Number(p.x))||!Number.isFinite(Number(p.y))||p.down>0||Number(p.hp)<=0)return;
+  p.primeMaxBoost=Math.max(0,(Number(p.primeMaxBoost)||0)-dt);p.maxAuraCd=Math.max(0,(Number(p.maxAuraCd)||0)-dt);
+  const boosted=Number(p.primeMaxBoost)>0,radius=boosted?235:165,b=g.b,dist=Math.hypot(b.x-p.x,b.y-p.y);
+  let removed=0;g.eb=(g.eb||[]).filter(e=>{if(Math.hypot(e.x-p.x,e.y-p.y)<radius){removed++;return false;}return true;});
+  if(removed&&R()<.5){ring2(p.x,p.y,boosted?'#fff3b0':'#65f4ff',.08,Math.min(240,80+removed*5));em(p.x,p.y,Math.min(5,removed),{c:boosted?'#fff3b0':'#65f4ff',s:120,l:.25,r:2});}
+  if(p.maxAuraCd<=0&&dist<radius+(Number(b.sz)||40)*.35&&b.inv<=0&&b.ls!==1){
+    b.hp-=(boosted?340:145)*CHB[6][3]*(g.bonus||1);b.hit=.09;em(p.x,p.y,boosted?12:7,{c:boosted?'#fff3b0':'#65f4ff',s:220,l:.38,r:3});
+    if(R()<.75)ring2(b.x,b.y,boosted?'#fff3b0':'#b57bff',.18,boosted?250:170);
+  }
+  p.maxAuraCd=boosted?.065:.115;
+}
+const _zubMaxAuraTickPrimeBase=maxAuraTick;
+maxAuraTick=function(p,dt){if((p===g?.p&&g?.pc===6)||(p&&Number(p.char)===6))return primeAuraTick(p,dt);return _zubMaxAuraTickPrimeBase(p,dt);};
+const _zubMpUpdatePlayersPrimeBase=mpUpdatePlayers;
+mpUpdatePlayers=function(dt){
+  _zubMpUpdatePlayersPrimeBase(dt);
+  if(!MP.active||MP.role!=='host'||!MP.started||!g||!g.b||S!=='play')return;
+  for(const pl of Object.values(MP.players||{}))if(pl&&mpCharIndex(pl.char,0)===6&&pl.down<=0&&pl.hp>0)primeAuraTick(pl,dt);
+};
+const _zubUpdPrimeBase=upd;
+upd=function(dt){
+  _zubUpdPrimeBase(dt);
+  if(!g)return;
+  if(g.b&&S==='play'&&!(MP.active&&MP.role==='guest')&&g.pc===6&&g.p&&g.p.hp>0&&!(MP.active&&MP.role==='host'&&MP.started&&MP.localDown))primeAuraTick(g.p,dt);
+  if(Array.isArray(g.primeLasers)){for(const l of g.primeLasers)if(l)l.t=Math.max(0,(Number(l.t)||0)-dt);g.primeLasers=g.primeLasers.filter(l=>l&&l.t>0);}
+  if(Array.isArray(g.primeBursts)){for(const b of g.primeBursts)if(b)b.t=Math.max(0,(Number(b.t)||0)-dt);g.primeBursts=g.primeBursts.filter(b=>b&&b.t>0);}
+};
+
+const _zubMpRemoteAbilityPrimeBase=mpRemoteAbility;
+mpRemoteAbility=function(pl,j){
+  if(!pl||mpCharIndex(pl.char,0)!==6)return _zubMpRemoteAbilityPrimeBase(pl,j);
+  if(!g||!g.b||pl.down>0||pl.hp<=0||!Number.isInteger(j)||j<0||j>2)return;
+  if(!Array.isArray(pl.abilityCd))pl.abilityCd=[0,0,0];if((Number(pl.abilityCd[j])||0)>0)return;
+  const spec=CAB[6][j];pl.abilityCd[j]=Math.max(4,Number(spec&&spec[1])||10)*CDM;
+  const x=pl.x,y=pl.y,bx=g.b.x,by=g.b.y;primeMaxAbility(pl,j,pl.id);
+  if(typeof zubPushAbilityFx==='function')zubPushAbilityFx(6,j,x,y,pl.x,pl.y,bx,by,pl.id);
+};
+
+// Draw Prime Max's oversized aura, prism laser and expanding event-horizon rings.
+function zubDrawPrimeAuraAt(x,y,boosted=false){
+  const pulse=.5+.5*Math.sin(tm*(boosted?15:8)),radius=boosted?78:59;X.save();X.globalCompositeOperation='lighter';
+  const grad=X.createRadialGradient(x,y,3,x,y,radius);grad.addColorStop(0,'#fff3b088');grad.addColorStop(.35,'#65f4ff55');grad.addColorStop(.68,'#b57bff33');grad.addColorStop(1,'#65f4ff00');X.fillStyle=grad;X.beginPath();X.arc(x,y,radius+pulse*5,0,PI2);X.fill();
+  for(let i=0;i<5;i++){X.globalAlpha=.36+i*.07;X.strokeStyle=['#fff3b0','#65f4ff','#b57bff','#ffffff','#fff3b0'][i];X.lineWidth=1.3+i*.35;X.beginPath();X.ellipse(x,y,35+i*7+pulse*3,41+i*6,tm*.18+i*.62,0,PI2);X.stroke();}
+  for(let i=0;i<12;i++){const a=tm*(boosted?2.5:1.55)+i*PI2/12,r=radius*.77+Math.sin(tm*6+i)*5;zubStar(x+Math.cos(a)*r,y+Math.sin(a)*r*.74,boosted?4:3,i%3===0?'#fff3b0':i%2?'#65f4ff':'#b57bff',a,.92);}
+  X.restore();
+}
+function zubDrawPrimeLaser(l){if(!l||Number(l.t)<=0)return;const f=Math.max(0,Math.min(1,Number(l.t)/(Number(l.life)||.52))),x=Number(l.x)||0,y=Number(l.y)||0,a=Number(l.a)||0,len=1280;X.save();X.globalCompositeOperation='lighter';X.globalAlpha=f;X.lineCap='round';
+  for(const [col,w,blur] of [['#b57bff',29,30],['#65f4ff',19,22],['#fff3b0',9,12],['#ffffff',3,5]]){X.strokeStyle=col;X.lineWidth=w;X.shadowColor=col;X.shadowBlur=blur;X.beginPath();X.moveTo(x,y);X.lineTo(x+Math.cos(a)*len,y+Math.sin(a)*len);X.stroke();}
+  X.shadowBlur=0;for(let i=0;i<7;i++){const t=(i+1)/8,px=x+Math.cos(a)*len*t,py=y+Math.sin(a)*len*t;zubStar(px,py,8+(i%2)*3,'#fff3b0',tm+i,.8*f);}X.restore();
+}
+function zubDrawPrimeBurst(b){if(!b||Number(b.t)<=0)return;const p=1-Math.max(0,Math.min(1,b.t/(Number(b.life)||1)));X.save();X.globalCompositeOperation='lighter';X.globalAlpha=1-p;for(let i=0;i<3;i++){X.strokeStyle=['#fff3b0','#65f4ff','#b57bff'][i];X.lineWidth=6-i;X.beginPath();X.arc(b.x,b.y,14+p*(220-i*34),0,PI2);X.stroke();}for(let i=0;i<16;i++){const a=i*PI2/16;X.strokeStyle=i%2?'#fff3b0':'#65f4ff';X.lineWidth=2.4;X.beginPath();X.moveTo(b.x+Math.cos(a)*p*25,b.y+Math.sin(a)*p*25);X.lineTo(b.x+Math.cos(a)*(40+p*190),b.y+Math.sin(a)*(40+p*190));X.stroke();}X.restore();}
+const _zubDrawMPOverlayPrimeBase=drawMPOverlay;
+drawMPOverlay=function(){
+  _zubDrawMPOverlayPrimeBase();
+  if(!MP.active||!MP.started||!g||!['play','dlg','pause','pick','win','over','mpdead'].includes(S))return;
+  const players=MP.role==='host'?Object.values(MP.players||{}):(MP.otherPlayers||[]);
+  for(const pl of players){if(!pl||mpCharIndex(pl.char,0)!==6||!Number.isFinite(Number(pl.x))||!Number.isFinite(Number(pl.y)))continue;if(MP.role==='guest'&&(pl.id==='host'||pl.isHost)&&g.pc===6)continue;zubDrawPrimeAuraAt(Number(pl.x),Number(pl.y),Number(pl.primeMaxBoost)>0);}
+};
+const _zubDrawPrimeBase=draw;
+draw=function(){
+  _zubDrawPrimeBase();
+  if(!g||!['play','pause','dlg','pick','win','over','mpdead'].includes(S))return;
+  if(g.p&&g.pc===6)zubDrawPrimeAuraAt(g.p.x,g.p.y,Number(g.p.primeMaxBoost)>0);
+  for(const l of (g.primeLasers||[]))zubDrawPrimeLaser(l);
+  for(const b of (g.primeBursts||[]))zubDrawPrimeBurst(b);
+};
+
+// Extend the compact FX palette and preserve Prime Max's character id in snapshots.
+ZUB_FX_PALETTES.push(['#fff3b0','#65f4ff','#b57bff']);
+const _zubPushAbilityFxPrimeBase=zubPushAbilityFx;
+zubPushAbilityFx=function(ch,j,x,y,ex,ey,bx,by,ownerId){return _zubPushAbilityFxPrimeBase(Math.max(0,Math.min(6,Number(ch)||0)),j,x,y,ex,ey,bx,by,ownerId)};
+
+// Keep the seventh card hidden until the admin unlock, then show all fighters in a compact 4×2 grid.
+cselScr=function(){
+  const t=tm,count=zubCharacterCount();X.save();X.globalCompositeOperation='lighter';
+  for(let i=0;i<8;i++){X.fillStyle='#d6336c10';X.beginPath();X.moveTo(400,-40);X.arc(400,-40,900,1+i*.31+Math.sin(t*.3)*.1,1.12+i*.31+Math.sin(t*.3)*.1);X.fill();}X.restore();
+  T('CHOOSE YOUR FIGHTER',400,32,28,'#f0b94a');
+  for(let i=0;i<count;i++){
+    const c=CHS[i],r=zubCharacterRect(i,'csel'),x=r.x,y=r.y,w=r.w,h=r.h,selected=i===SEL,col=['#ffb84d','#7dffb0','#b57bff','#2ec4b6','#ff7eb6','#65f4ff','#fff3b0'][i];
+    X.fillStyle=selected?'#2a1b55':'#17122f';X.strokeStyle=selected?col:'#493962';X.lineWidth=selected?2.6:1.2;X.beginPath();X.roundRect(x,y,w,h,11);X.fill();X.stroke();
+    const halo=X.createRadialGradient(x+w/2,y+36,2,x+w/2,y+36,42);halo.addColorStop(0,col+(selected?'66':'30'));halo.addColorStop(1,col+'00');X.fillStyle=halo;X.beginPath();X.arc(x+w/2,y+36,42,0,PI2);X.fill();
+    spr(CI[i],x+w/2,y+36,selected?39:34);T(c[0],x+w/2,y+73,12,selected?col:'#f1e8d6');T(c[1],x+w/2,y+88,8.5,'#9fe8ff');
+    const desc=String(c[2]||'').split('|');T(desc[0]||'',x+w/2,y+105,8,'#c9bfe0');T(desc[1]||'',x+w/2,y+116,8,'#c9bfe0');
+    const stat=CHB[i];T('HP '+(4+stat[0])+'  SPD '+stat[1].toFixed(2)+'  DMG '+stat[3].toFixed(2),x+w/2,y+135,8,selected?'#fff3b0':'#b9aecb');
+  }
+  X.fillStyle='#0a0618dd';X.strokeStyle='#493962';X.lineWidth=1.4;X.beginPath();X.roundRect(20,380,760,71,10);X.fill();X.stroke();
+  T(String(CHD[SEL]||'').slice(0,104),400,394,9.5,'#f1e8d6');
+  T('ABILITIES  ·  1 '+CAB[SEL][0][0]+'  |  2 '+CAB[SEL][1][0]+'  |  3 '+CAB[SEL][2][0],400,416,9.5,'#7df9ff');
+  T('HP '+(4+CHB[SEL][0])+'     SPEED ×'+CHB[SEL][1].toFixed(2)+'     DAMAGE ×'+CHB[SEL][3].toFixed(2),400,436,9,'#ffe27a');
+  X.fillStyle='#f0b94a';X.beginPath();X.roundRect(300,464,200,38,19);X.fill();T('START RUN',400,483,17,'#120c24');
+  if(SET.primeMaxUnlocked||MP.primeMaxAvailable)T('SECRET CHARACTER UNLOCKED  ·  PRIME MAX AVAILABLE IN THIS ROOM',400,521,9,'#fff3b0');else T('Secret character? Unlock PRIME MAX from the Admin Panel.',400,521,9,'#b9aecb');
+  T('Click a fighter · Keys 1–'+count+' · ←/→ choose · Enter starts · Esc back',400,579,10,'#b9aecb');
+};
+
+const _zubSelectCharacterPrimeBase=zubSelectCharacter;
+zubSelectCharacter=function(i){
+  if(i===6&&!SET.primeMaxUnlocked&&!MP.primeMaxAvailable){toast.push(['Prime Max is secret. Unlock him in the admin panel first.',3]);return;}
+  return _zubSelectCharacterPrimeBase(i);
+};
+const _zubPressPrimeV45Base=press;
+press=function(k){
+  if(S==='admin'){
+    const rows=Math.ceil(ADMIN_ACTIONS.length/2);
+    if(k==='escape'){adminAction('close');return;}
+    if(k==='arrowdown'||k==='arrowup'){
+      const row=Math.floor(adminCursor/2),col=adminCursor%2,nextRow=(row+(k==='arrowdown'?1:rows-1))%rows;let next=nextRow*2+col;if(next>=ADMIN_ACTIONS.length)next=nextRow*2;adminCursor=Math.min(ADMIN_ACTIONS.length-1,next);return;
+    }
+    if(k==='arrowleft'||k==='arrowright'){const next=adminCursor+(k==='arrowleft'?-1:1);if(next>=0&&next<ADMIN_ACTIONS.length&&Math.floor(next/2)===Math.floor(adminCursor/2))adminCursor=next;return;}
+    if(k==='enter'||k===' '){adminAction(ADMIN_ACTIONS[adminCursor][1]);return;}
+    if(k==='c'){
+      if(M.y>=537&&M.y<=570&&M.x>=300&&M.x<=500){adminAction('close');return;}
+      if(M.y>=105&&M.y<=368&&M.x>=30&&M.x<=770){const col=M.x<400?0:1,row=Math.round((M.y-119)/28),index=row*2+col,center=119+row*28,xStart=35+col*375;if(Math.abs(M.y-center)<=12&&M.x>=xStart&&M.x<=xStart+355&&index>=0&&index<ADMIN_ACTIONS.length){adminCursor=index;adminAction(ADMIN_ACTIONS[index][1]);return;}}
+      return;
+    }
+    return;
+  }
+  if(S==='csel'||S==='mplobby'){
+    const count=zubCharacterCount();
+    if(k==='c'){
+      for(let i=0;i<count;i++){const r=zubCharacterRect(i,S);if(r&&M.x>=r.x&&M.x<=r.x+r.w&&M.y>=r.y&&M.y<=r.y+r.h){zubSelectCharacter(i);return;}}
+      if(S==='csel'){
+        if(M.y>=375&&M.y<455)return;
+        if(M.y>=456&&M.y<=508&&M.x>=290&&M.x<=510){newRun(0);return;}
+        if(M.y>=64&&M.y<=374)return;
+      }else if(M.y>=94&&M.y<=322)return;
+    }
+    if(/^[1-7]$/.test(k)){const i=Number(k)-1;if(i<count){zubSelectCharacter(i);return;}return;}
+    if(k==='arrowleft'||k==='arrowright'){const next=(SEL+(k==='arrowright'?1:count-1))%count;zubSelectCharacter(next);return;}
+  }
+  return _zubPressPrimeV45Base(k);
+};
+
+// Add visual and development-log notes, and expose the secret move's tooltip.
+TIPS.push('Prime Max is a secret, extremely overpowered Max variant. Unlock him in the Admin Panel.');
+LOG.unshift(['v45 (latest)','Added Prime Max as a secret seventh fighter, unlockable through the admin panel. Prime Max has unique model visuals, hugely boosted stats, an annihilating aura, Absolute Prism laser, Event Horizon, and Beyond Infinity. Updated solo/co-op character selection and player ability synchronization for the secret fighter.']);
+
+
+
+// ---------- v46: high-rate co-op movement channel + redesigned admin dashboard ----------
+// A lightweight secondary PeerJS channel isolates movement from large game snapshots.
+MP.motionConn=null;MP.motionConnections=new Map();MP.motionSeq=0;MP.motionInputSeq=0;
+MP.lastMotionAt=0;MP.lastMotionRxAt=0;MP.lastMotionInputAt=0;MP.lastMotionInputSignature='';MP.lastMotionBitsSignature='';
+MP.motionFromPositions=null;MP.motionToPositions=null;MP.motionReceivedAt=0;MP.motionInterval=1/30;MP.motionLastSeq=0;MP.motionPlayers=[];MP.primeMaxAvailable=!!(SET&&SET.primeMaxUnlocked);
+// Share the host's Prime Max unlock with connected guests for the current room only.
+const _zubPrimeBroadcastV46=mpBroadcastLobby;
+mpBroadcastLobby=function(){_zubPrimeBroadcastV46();if(MP.role==='host'){const packet={type:'secretCharacter',primeMaxUnlocked:!!(SET&&SET.primeMaxUnlocked)};for(const c of MP.connections.values())mpSend(c,packet);}};
+const _zubPrimeGuestV46=mpGuestMessage;
+mpGuestMessage=function(msg){if(msg&&msg.type==='secretCharacter'){MP.primeMaxAvailable=!!msg.primeMaxUnlocked;return;}return _zubPrimeGuestV46(msg);};
+function zubNormalizeMotionInput(msg,old={}){
+  return {
+    left:!!msg.left,right:!!msg.right,up:!!msg.up,down:!!msg.down,
+    fire:!!msg.fire,eat:!!msg.eat,autoFire:!!msg.autoFire,
+    aimX:Number.isFinite(Number(msg.aimX))?Math.max(0,Math.min(W,Number(msg.aimX))):Number(old.aimX)||400,
+    aimY:Number.isFinite(Number(msg.aimY))?Math.max(0,Math.min(H,Number(msg.aimY))):Number(old.aimY)||300,
+    aimBoss:!!msg.aimBoss
+  };
+}
+function zubOpenMotionConnection(){
+  const hostId=MP.roomId||new URLSearchParams(location.search).get('mp');
+  if(!MP.peer||!hostId||MP.motionConn&&MP.motionConn.open)return;
+  try{
+    MP.motionConn=MP.peer.connect(hostId,{reliable:false,metadata:{kind:'zub-motion',name:MP.name,char:mpCharIndex(SEL,0)}});
+    MP.motionConn.on('open',()=>{MP.lastMotionInputAt=0;MP.lastMotionInputSignature='';MP.lastMotionBitsSignature='';});
+    MP.motionConn.on('data',msg=>zubGuestMotionMessage(msg));
+    MP.motionConn.on('close',()=>{if(MP.motionConn&&MP.motionConn.peer===hostId)MP.motionConn=null;});
+    MP.motionConn.on('error',()=>{MP.motionConn=null;});
+  }catch(e){MP.motionConn=null;console.warn('Fast movement channel unavailable; using standard multiplayer input.',e);}
+}
+function zubMotionPlayer(p,isHost=false){
+  if(!p)return null;
+  return {
+    id:isHost?'host':String(p.id||''),name:String(p.name||(isHost?MP.name:'Player')).slice(0,16),
+    char:mpCharIndex(isHost?SEL:p.char,0),ready:!!p.ready,isHost:!!isHost,
+    x:Number.isFinite(Number(p.x))?Number(p.x):400,y:Number.isFinite(Number(p.y))?Number(p.y):500,
+    hp:Math.max(0,Number(isHost&&MP.localDown?0:p.hp)||0),maxHp:Math.max(1,Number(isHost&&g&&g.p?g.p.mh:p.maxHp)||3),
+    inv:Math.max(0,Number(isHost&&g&&g.p?g.p.inv:p.inv)||0),down:isHost?(MP.localDown?1:0):(Number(p.down)||0),
+    boost:Math.max(0,Number(p.boost)||0),maxAuraBoost:Math.max(0,Number(p.maxAuraBoost)||0),
+    maxAuraCd:Math.max(0,Number(p.maxAuraCd)||0),primeMaxBoost:Math.max(0,Number(p.primeMaxBoost)||0),
+    abilityCd:Array.isArray(p.abilityCd)?p.abilityCd.slice(0,3).map(n=>Math.max(0,Number(n)||0)):[0,0,0]
+  };
+}
+function zubBuildMotionRoster(){
+  const host=zubMotionPlayer({id:'host',name:MP.name,char:SEL,ready:true,x:g&&g.p?g.p.x:400,y:g&&g.p?g.p.y:500,hp:MP.localDown?0:(g&&g.p?g.p.hp:1),maxHp:g&&g.p?g.p.mh:3,inv:g&&g.p?g.p.inv:0,down:MP.localDown?1:0,boost:0,primeMaxBoost:g&&g.p?g.p.primeMaxBoost||0:0,abilityCd:[0,0,0]},true);
+  return [host,...Object.values(MP.players||{}).map(p=>zubMotionPlayer(p,false)).filter(Boolean)];
+}
+function zubGuestMotionMessage(msg){
+  if(!msg||msg.type!=='motionState'||MP.role!=='guest'||!Array.isArray(msg.players))return;
+  const seq=Number(msg.seq)||0;if(seq&&seq<=Number(MP.motionLastSeq||0))return;
+  if(seq)MP.motionLastSeq=seq;
+  const now=tm,prev=MP.otherPlayers||[],oldPositions=mpCapturePlayerPositions(prev);
+  // Interpolate from the current visual positions, not from a possibly stale 10 Hz snapshot.
+  for(const p of prev){
+    const from=MP.motionFromPositions&&MP.motionToPositions?MP.motionFromPositions[p.id]:null;
+    const to=MP.motionToPositions&&MP.motionToPositions[p.id];
+    if(from&&to){const a=Math.max(0,Math.min(1,(now-MP.motionReceivedAt)/Math.max(.02,MP.motionInterval||1/30)));p.x=from[0]+(to[0]-from[0])*a;p.y=from[1]+(to[1]-from[1])*a;}
+  }
+  const currentPositions=mpCapturePlayerPositions(prev.length?prev:[]);
+  const merged=msg.players.map(raw=>{
+    const prior=prev.find(p=>p&&p.id===raw.id)||{};
+    const isMe=!!(MP.peer&&MP.peer.id&&raw.id===MP.peer.id),isHost=raw.id==='host'||raw.isHost;
+    return {...prior,...raw,char:isMe?mpCharIndex(MP.localChar,raw.char):isHost?mpCharIndex(MP.hostChar,raw.char):mpCharIndex(raw.char,0)};
+  });
+  const targets=mpCapturePlayerPositions(merged);
+  MP.motionFromPositions=currentPositions;MP.motionToPositions=targets;
+  const elapsed=MP.lastMotionRxAt?now-MP.lastMotionRxAt:1/30;
+  MP.motionInterval=Math.max(.022,Math.min(.12,elapsed||1/30));MP.motionReceivedAt=now;MP.lastMotionRxAt=now;
+  MP.motionPlayers=merged;MP.otherPlayers=merged;
+  const host=merged.find(p=>p.id==='host'||p.isHost);
+  // The host avatar is the primary g.p sprite on guest screens, so drive it from this fast stream too.
+  if(host&&g&&g.p){
+    if(!MP.motionFromPositions.host)MP.motionFromPositions.host=[Number(g.p.x)||host.x,Number(g.p.y)||host.y];
+  }
+}
+function zubMotionTick(){
+  if(!MP||!MP.active)return;
+  if(MP.role==='guest'&&MP.started&&MP.conn&&MP.conn.open&&MP.motionConn&&MP.motionConn.open){
+    const input=zubNormalizeMotionInput({
+      left:!!(K[KB.left]||K.arrowleft),right:!!(K[KB.right]||K.arrowright),up:!!(K[KB.up]||K.arrowup),down:!!(K[KB.down]||K.arrowdown),
+      fire:!!(M.d||K.j),eat:!!(K[KB.eat]||K.shift||K.rm),autoFire:!!SET.af,
+      aimX:Math.max(0,Math.min(W,Math.round((Number(M.x)||400)/8)*8)),aimY:Math.max(0,Math.min(H,Math.round((Number(M.y)||300)/8)*8)),aimBoss:!!SET.aa
+    },{});
+    const sig=[input.left,input.right,input.up,input.down,input.fire,input.eat,input.autoFire,input.aimX,input.aimY,input.aimBoss].map(Number).join('|');
+    const bits=[input.left,input.right,input.up,input.down].map(Number).join('');
+    const bitsChanged=bits!==MP.lastMotionBitsSignature,changed=sig!==MP.lastMotionInputSignature,elapsed=tm-(MP.lastMotionInputAt||0),moving=input.left||input.right||input.up||input.down;
+    if(bitsChanged||elapsed>=(moving||input.fire||input.eat?1/30:.14)||changed&&elapsed>=1/30){
+      MP.lastMotionInputAt=tm;MP.lastMotionInputSignature=sig;MP.lastMotionBitsSignature=bits;MP.motionInputSeq=(MP.motionInputSeq||0)+1;
+      mpSend(MP.motionConn,{type:'motionInput',seq:MP.motionInputSeq,...input});
+    }
+  }
+  if(MP.role==='host'&&MP.started&&g&&g.p&&tm-(MP.lastMotionAt||0)>=1/30){
+    MP.lastMotionAt=tm;const recipients=[...(MP.motionConnections||new Map()).values()].filter(c=>c&&c.open);if(!recipients.length)return;
+    const packet={type:'motionState',seq:++MP.motionSeq,players:zubBuildMotionRoster()};
+    for(const c of recipients){try{mpSend(c,packet)}catch(e){}}
+  }
+}
+const _zubMpTickV46=mpTick;
+mpTick=function(){_zubMpTickV46();zubMotionTick();};
+const _zubApplyGuestInterpolationV46=mpApplyGuestInterpolation;
+mpApplyGuestInterpolation=function(){
+  _zubApplyGuestInterpolationV46();
+  if(MP.role!=='guest'||!MP.started||!MP.motionToPositions)return;
+  const from=MP.motionFromPositions||MP.motionToPositions,to=MP.motionToPositions;
+  const alpha=Math.max(0,Math.min(1,(tm-MP.motionReceivedAt)/Math.max(.022,MP.motionInterval||1/30)));
+  const mix=(a,b)=>a+(b-a)*alpha;
+  for(const pl of MP.otherPlayers||[]){
+    const a=from[pl.id],b=to[pl.id];if(!a||!b)continue;
+    let x=mix(a[0],b[0]),y=mix(a[1],b[1]);
+    // Predict only the guest's own visible avatar for instant-feeling controls; the host still
+    // owns the actual coordinates, and the next motion sample blends any prediction error out.
+    if(MP.peer&&pl.id===MP.peer.id&&!MP.localDown&&pl.down<=0&&g&&g.p){
+      let dx=(K[KB.right]||K.arrowright?1:0)-(K[KB.left]||K.arrowleft?1:0),dy=(K[KB.down]||K.arrowdown?1:0)-(K[KB.up]||K.arrowup?1:0);
+      if(g.flip>0){dx=-dx;dy=-dy;}const len=Math.hypot(dx,dy)||1;
+      if(dx||dy){const ch=mpCharIndex(MP.localChar,0),u=g.u||{};const speed=280*(g.slow||1)*(1+.15*(u.speed||0))*(g.drg>0?1.3:1)*(g.spd>0?1.7:1)*CHB[ch][1];const elapsed=Math.min(.07,Math.max(0,tm-MP.motionReceivedAt));const px=a[0]+dx/len*speed*elapsed,py=a[1]+dy/len*speed*elapsed;x=x*.42+px*.58;y=y*.42+py*.58;}
+    }
+    pl.x=x;pl.y=y;
+  }
+  const a=from.host,b=to.host;if(a&&b&&g&&g.p){g.p.x=mix(a[0],b[0]);g.p.y=mix(a[1],b[1]);}
+};
+const _zubMpJoinV46=mpJoin;
+mpJoin=function(roomId){
+  MP.motionConn=null;MP.motionConnections=new Map();MP.motionSeq=0;MP.motionInputSeq=0;MP.lastMotionAt=0;MP.lastMotionRxAt=0;MP.lastMotionInputAt=0;MP.lastMotionInputSignature='';MP.lastMotionBitsSignature='';MP.motionFromPositions=null;MP.motionToPositions=null;MP.motionReceivedAt=0;MP.motionLastSeq=0;MP.motionPlayers=[];MP.primeMaxAvailable=!!(SET&&SET.primeMaxUnlocked);
+  return _zubMpJoinV46(roomId);
+};
+const _zubMpCreateV46=mpCreate;
+mpCreate=function(){
+  MP.motionConn=null;MP.motionConnections=new Map();MP.motionSeq=0;MP.motionInputSeq=0;MP.lastMotionAt=0;MP.lastMotionRxAt=0;MP.lastMotionInputAt=0;MP.lastMotionInputSignature='';MP.lastMotionBitsSignature='';MP.motionFromPositions=null;MP.motionToPositions=null;MP.motionReceivedAt=0;MP.motionLastSeq=0;MP.motionPlayers=[];MP.primeMaxAvailable=!!(SET&&SET.primeMaxUnlocked);
+  return _zubMpCreateV46();
+};
+const _zubMpLeaveV46=mpLeave;
+mpLeave=function(toTitle=true){try{if(MP.motionConn)MP.motionConn.close();for(const c of (MP.motionConnections||new Map()).values())try{c.close()}catch(e){}}catch(e){}MP.motionConn=null;MP.motionConnections=new Map();MP.primeMaxAvailable=!!(SET&&SET.primeMaxUnlocked);return _zubMpLeaveV46(toTitle);};
+
+// Compact the visual rendering work under pressure without changing gameplay authority.
+// The host remains authoritative; the dedicated motion channel continues at ~30 Hz.
+// v46 admin panel: grouped, selectable control deck with persistent secret-boss clues.
+let zubAdminTab=0;
+const ZUB_ADMIN_TABS=[
+  {name:'PLAYER',sub:'Health, safety and survival',keys:['heal','heart','fivehearts','invincible']},
+  {name:'UPGRADES',sub:'Build your strongest run',keys:['upgrade','triple','specific','unlockall','damage','cooldowns']},
+  {name:'BOSS LAB',sub:'Control the current encounter',keys:['jump','skip','kill','resetboss']},
+  {name:'TOOLS',sub:'Clean up and inspect the run',keys:['clear','boost','netstatus']},
+  {name:'SECRETS',sub:'Hidden characters and lore',keys:['prime']}
+];
+const ZUB_ADMIN_INFO={
+  heal:'Refill all hearts and grant a brief safety shield.',heart:'Add one maximum heart and refill one heart.',fivehearts:'Add up to five maximum hearts at once.',invincible:'Ignore damage for 15 seconds.',
+  upgrade:'Grant one random upgrade from the game pool.',triple:'Grant three random upgrades immediately.',specific:'Choose any upgrade by name, key, or list number.',unlockall:'Unlock every upgrade missing from this run.',damage:'Double the current damage multiplier.',cooldowns:'Reset character and active-skill cooldowns for the party.',
+  jump:'Choose any boss by number or name; can start a solo run.',skip:'Move forward by one boss in the current run.',kill:'Defeat the current boss immediately, skipping Last Stand.',resetboss:'Restore the boss to full health and clear current hazards.',
+  clear:'Remove all enemy bullets currently on screen.',boost:'Increase movement speed and fire rate for 15 seconds.',netstatus:'Show movement-channel health, snapshot pressure and connection count.',prime:'Unlock Prime Max permanently on this device and select him.'
+};
+const _zubAdminActionPreNetV46=adminAction;
+adminAction=function(which){
+  if(which==='netstatus'){
+    const mainOpen=MP.role==='host'?[...MP.connections.values()].filter(c=>c&&c.open).length:(MP.conn&&MP.conn.open?1:0);
+    const fastOpen=MP.role==='host'?[...(MP.motionConnections||new Map()).values()].filter(c=>c&&c.open).length:(MP.motionConn&&MP.motionConn.open?1:0);
+    const queued=MP.role==='host'?[...MP.connections.values()].reduce((n,c)=>n+Number(c&&c.dataChannel&&c.dataChannel.bufferedAmount||0),0):Number(MP.conn&&MP.conn.dataChannel&&MP.conn.dataChannel.bufferedAmount||0);
+    toast.push(['NETWORK · main '+mainOpen+' / motion '+fastOpen+' · skipped snapshots '+(MP.snapshotSkips||0)+' · queued '+Math.round(queued/1024)+' KB',4.5]);return;
+  }
+  return _zubAdminActionPreNetV46(which);
+};
+function zubAdminActionList(){const tab=ZUB_ADMIN_TABS[zubAdminTab]||ZUB_ADMIN_TABS[0];return tab.keys.map(key=>ADMIN_ACTIONS.find(a=>a[1]===key)||([key==='netstatus'?'Multiplayer Network Status':key==='prime'?'Unlock Secret Character: Prime Max':key,key]));}
+adminScr=function(){
+  X.save();X.setTransform(D,0,0,D,0,0);X.globalAlpha=1;
+  const bg=X.createLinearGradient(0,0,W,H);bg.addColorStop(0,'#070916');bg.addColorStop(.48,'#17102b');bg.addColorStop(1,'#080d1c');X.fillStyle=bg;X.fillRect(0,0,W,H);
+  X.save();X.globalCompositeOperation='lighter';const glow=X.createRadialGradient(650,90,5,650,90,320);glow.addColorStop(0,'#eb4d9b22');glow.addColorStop(1,'#eb4d9b00');X.fillStyle=glow;X.fillRect(0,0,W,H);X.restore();
+  for(let i=0;i<32;i++){const x=(i*127+Math.sin(tm*.2+i)*15)%W,y=(i*47+Math.cos(tm*.17+i)*12)%H;X.globalAlpha=.16+.18*(.5+.5*Math.sin(tm+i));X.fillStyle=i%3?'#9fe8ff':'#f0b94a';X.fillRect(x,y,1.4,1.4);}X.globalAlpha=1;
+  X.fillStyle='#0b0e20';X.strokeStyle='#4d4777';X.lineWidth=1.6;X.beginPath();X.roundRect(15,13,770,574,18);X.fill();X.stroke();
+  X.fillStyle='#ff5ca8';X.beginPath();X.roundRect(28,27,5,48,2);X.fill();
+  T('ZUB  /  ADMIN DECK',47,39,22,'#f7f2ff','left');T('DEVELOPER CONTROLS  •  v46',48,61,9,'#91dfff','left');
+  const status=MP.active?(MP.role==='guest'?'CO-OP GUEST  ·  READ ONLY':MP.started?'HOST  ·  RUN ACTIVE':'HOST  ·  LOBBY'):g&&g.b?'SOLO  ·  RUN ACTIVE':'SOLO  ·  NO RUN';
+  const statusColor=MP.active&&MP.role==='guest'?'#ffb4c8':g&&g.b?'#9cffcc':'#ffe27a';
+  X.fillStyle='#12142a';X.strokeStyle=statusColor;X.lineWidth=1;X.beginPath();X.roundRect(555,27,211,30,12);X.fill();X.stroke();T(status,660,42,9,statusColor);
+  T(g&&g.b?'CURRENT BOSS  ·  '+String(g.b.d&&g.b.d[0]||'Unknown').toUpperCase():'NO ACTIVE BOSS  ·  USE BOSS LAB → JUMP',400,86,10,g&&g.b?'#baffd6':'#ffe27a');
+  const tabsY=101,tabW=139,gap=8;ZUB_ADMIN_TABS.forEach((tab,i)=>{const x=29+i*(tabW+gap),sel=i===zubAdminTab,hover=M.x>=x&&M.x<=x+tabW&&M.y>=tabsY&&M.y<=tabsY+34;X.fillStyle=sel?'#ff5ca8':hover?'#2b2147':'#11162a';X.strokeStyle=sel?'#ffd4e7':hover?'#9fe8ff':'#454061';X.lineWidth=sel?1.8:1;X.beginPath();X.roundRect(x,tabsY,tabW,34,10);X.fill();X.stroke();T(tab.name,x+tabW/2,tabsY+18,10,sel?'#1d0a22':'#dbd6ec');});
+  const tab=ZUB_ADMIN_TABS[zubAdminTab]||ZUB_ADMIN_TABS[0],items=zubAdminActionList();
+  X.fillStyle='#0d1123';X.strokeStyle='#393659';X.lineWidth=1;X.beginPath();X.roundRect(28,145,744,242,14);X.fill();X.stroke();
+  T(tab.sub.toUpperCase(),43,163,9,'#9fe8ff','left');T('SELECT AN ACTION  ·  '+items.length+' AVAILABLE',757,163,8,'#7f789b','right');
+  const inRun=!!(g&&g.b&&g.p)&&!(MP.active&&MP.role==='guest');
+  items.forEach((item,i)=>{
+    const col=i%2,row=Math.floor(i/2),x=41+col*365,y=180+row*64,w=350,h=54,key=item[1];
+    const hover=M.x>=x&&M.x<=x+w&&M.y>=y&&M.y<=y+h,selected=i===adminCursor;
+    const needsRun=!['jump','prime','close','netstatus'].includes(key),enabled=key==='netstatus'||(!(MP.active&&MP.role==='guest')&&(!needsRun||inRun));
+    X.fillStyle=selected?'#3b2049':hover?'#1c2440':'#13182b';X.strokeStyle=selected?'#ff5ca8':hover?'#89e8ff':'#343954';X.lineWidth=selected?1.8:1;
+    X.beginPath();X.roundRect(x,y,w,h,10);X.fill();X.stroke();
+    X.fillStyle=enabled?(selected?'#ff5ca8':'#9fe8ff'):'#5f5d73';X.beginPath();X.roundRect(x+9,y+10,4,34,2);X.fill();
+    T(String(i+1).padStart(2,'0'),x+25,y+20,9,enabled?'#ffe27a':'#6a6380','left');
+    T(item[0],x+48,y+20,10.5,enabled?'#f7f3ff':'#77738d','left');
+    const desc=(ZUB_ADMIN_INFO[key]||'Activate this developer control.');T(desc.length>47?desc.slice(0,44)+'…':desc,x+48,y+38,7.8,enabled?'#a5a2bd':'#656078','left');
+    if(selected){X.fillStyle='#ffe27a';X.beginPath();X.arc(x+w-15,y+15,3,0,PI2);X.fill();}
+  });
+  // Secret-boss clues remain visible in a dedicated intel panel, regardless of current tab.
+  X.fillStyle='#111429';X.strokeStyle='#60507f';X.lineWidth=1;X.beginPath();X.roundRect(28,398,744,151,13);X.fill();X.stroke();
+  T('SECRET INTEL  /  BOSS HINTS',43,416,10,'#ffe27a','left');T('CLUES ONLY — NO AUTO-UNLOCK',757,416,7.5,'#8f89a9','right');
+  const hints=[
+    ['HOLLOW KING','The fallen crown waits beneath the Underground Kingdom, beyond its first dark mirror.'],
+    ['CHRONOS','Look for repeating loops and cracked moments where the same second returns.'],
+    ['LEVIATHAN PRIME','Explore the route revealed when the tide withdraws.'],
+    ['CRIMSON EMPEROR / FALSE HERO','A red crown and an impossible reflection guard the path to Hunger.'],
+    ['FORGOTTEN CREATOR','Flawless boss victories can grant relic fragments. Collect three to complete the trail.']
+  ];
+  hints.forEach((h,i)=>{const row=i<3?i:i-3,col=i<3?0:1,x=43+col*365,y=435+row*21;T(h[0],x,y,7.5,i===4?'#baffd6':'#9fe8ff','left');T(h[1].length>57?h[1].slice(0,54)+'…':h[1],x,y+10,7.2,'#c9c4dc','left');});
+  X.fillStyle='#151a31';X.strokeStyle='#4d5c83';X.lineWidth=1;X.beginPath();X.roundRect(29,558,742,19,8);X.fill();X.stroke();
+  const selected=items[Math.max(0,Math.min(items.length-1,adminCursor))],detail=selected?((ZUB_ADMIN_INFO[selected[1]]||'Select to activate.')+'  ·  '+selected[0]):'Select an action';
+  T(detail.length>108?detail.slice(0,105)+'…':detail,40,568,7.6,'#d5d1e8','left');T('← → TAB   ↑ ↓ ACTION   ENTER USE   ESC BACK',760,568,7.2,'#9fe8ff','right');
+  X.restore();
+};
+const _zubPressV46Base=press;
+press=function(k){
+  if(S==='admin'){
+    const items=zubAdminActionList();
+    if(k==='escape'){adminAction('close');return;}
+    if(k==='arrowleft'){zubAdminTab=(zubAdminTab+ZUB_ADMIN_TABS.length-1)%ZUB_ADMIN_TABS.length;adminCursor=0;return;}
+    if(k==='arrowright'){zubAdminTab=(zubAdminTab+1)%ZUB_ADMIN_TABS.length;adminCursor=0;return;}
+    if(k==='arrowup'){adminCursor=(adminCursor+items.length-1)%items.length;return;}
+    if(k==='arrowdown'){adminCursor=(adminCursor+1)%items.length;return;}
+    if(k==='enter'||k===' '){const item=items[Math.max(0,Math.min(items.length-1,adminCursor))];if(item)adminAction(item[1]);return;}
+    if(k==='c'){
+      const tabsY=101,tabW=139,gap=8;
+      if(M.y>=tabsY&&M.y<=tabsY+34){const i=Math.floor((M.x-29)/(tabW+gap));if(i>=0&&i<ZUB_ADMIN_TABS.length){zubAdminTab=i;adminCursor=0;}return;}
+      if(M.y>=180&&M.y<=373){const col=M.x<400?0:1,row=Math.floor((M.y-180)/64),index=row*2+col;if(index>=0&&index<items.length){const x=41+col*365,y=180+row*64;if(M.x>=x&&M.x<=x+350&&M.y>=y&&M.y<=y+54){adminCursor=index;adminAction(items[index][1]);return;}}}
+      // A click anywhere in the footer/back region safely returns to Settings.
+      if(M.y>=558&&M.x>635){adminAction('close');return;}
+      return;
+    }
+    return;
+  }
+  return _zubPressV46Base(k);
+};
+LOG.unshift(['v46 (latest)','Improved co-op movement with a dedicated lightweight ~30 Hz movement/input channel, remote player interpolation driven by that stream, stale main-channel input protection, and bounded display snapshots under high projectile load. Rebuilt the admin panel into Player, Upgrades, Boss Lab, Tools and Secrets tabs, preserving secret boss hints and adding network diagnostics. Prime Max secret unlock remains available.']);
+
 </script></body></html>
