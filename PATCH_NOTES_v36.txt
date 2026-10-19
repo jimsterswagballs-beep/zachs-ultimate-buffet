@@ -1,0 +1,22 @@
+ZACH'S ULTIMATE BUFFET — v36 MULTIPLAYER UPDATE
+
+MULTIPLAYER PERFORMANCE
+- Smoothed remote boss/player motion and projectile movement between authoritative snapshots, without increasing snapshot frequency.
+- Reduced transmitted state size by omitting host-only position history from client snapshots.
+- Skip snapshots sooner when a peer's data channel is congested, so old updates are less likely to build up into extra lag.
+- Lowered PeerJS debug logging for a quieter production session.
+
+SPECTATOR VISUALS
+- Kept Last Stand arena/front-layer effects, ambient particles, weather and Super Graphics lighting active while a downed player spectates.
+- Restored Last Stand post-processing for clients, rather than skipping it entirely on guests.
+
+UPGRADE VOTING
+- Added a shared 10-second team vote when a multiplayer upgrade screen appears.
+- Shows time remaining and live vote totals; players can change their vote before time runs out.
+- The upgrade with the most votes is selected when the timer expires. Ties prefer the host's vote, then the host's highlighted choice.
+- Downed players who have chosen to spectate can vote too.
+- Single-player upgrade selection remains unchanged.
+
+TEST STATUS
+- JavaScript syntax check passed.
+- Live two-device multiplayer testing was not available here; please test a room with two browsers after uploading.
