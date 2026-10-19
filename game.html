@@ -66,7 +66,7 @@ CHS.forEach((c,i)=>{const x=30+i*190,s=i==SEL,h=M.x>x&&M.x<x+175&&M.y>100&&M.y<4
 spr(CI[i],x+87,y0+88+Math.sin(t*3+i)*(s?5:2),s?96:80);T(c[0],x+87,y0+168,17,s?'#f0b94a':'#f1e8d6');T(c[1],x+87,y0+190,12,'#9fe8ff');const b=CHB[i];[['HP',(4+b[0])/8,'#ff4d6d'],['SPD',b[1]/1.5,'#7dffb0'],['DMG',b[3]/1.8,'#ffd24a'],['RATE',b[2]/1.7,'#9fe8ff']].forEach((q,j)=>{const yy=y0+216+j*22;T(q[0],x+12,yy,11,'#b9aecb','left');X.fillStyle='#0a0618';X.fillRect(x+52,yy-5,108,10);X.fillStyle=q[2];X.fillRect(x+52,yy-5,108*Math.min(1,q[1]),10)});const k=Object.keys(b[4]);T(k.length?'Starts: '+k.join(', '):'Starts: nothing',x+87,y0+316,10,'#7dffb0')});
 X.fillStyle='#0a0618cc';X.beginPath();X.roundRect(40,450,720,40,10);X.fill();T(CHD[SEL],400,462,14,'#f1e8d6');T('Abilities: '+CAB[SEL].map((a,j)=>(j+1)+' '+a[0]).join('   '),400,481,12,'#7df9ff');X.fillStyle='#f0b94a';X.beginPath();X.roundRect(300,500,200,40,20);X.fill();T('Start Run',400,520,18,'#120c24');T('Click, press 1-4 or left/right to choose. Enter starts, Esc goes back.',400,H-18,12,'#b9aecb')}
 function titleExtra(){const t=tm;X.save();X.globalCompositeOperation='lighter';for(let i=0;i<3;i++){const u=((t*.25+i*.37)%1),x=W*(1.2-u*1.6)+i*60,y=u*260+i*40;X.strokeStyle='#ffffff';X.globalAlpha=Math.sin(u*Math.PI)*.8;X.lineWidth=2;X.beginPath();X.moveTo(x,y);X.lineTo(x+70,y-40);X.stroke()}X.restore();
-CHS.forEach((c,i)=>spr(CI[i],340+i*46,552+Math.sin(t*3+i)*4,i==SEL?44:36));T(TIPS[(t/4|0)%TIPS.length],400,230,13,'#9fe8ff');T('Best run: boss '+(SET.best||0)+'   Runs: '+(SET.runs||0),788,22,12,'#b9aecb','right');T('\u266a '+(mCur>=0?TN[mCur]:'click anywhere to start the music')+(SY?'  [BUILT-IN SYNTH: music folder not found next to game.html]':''),12,22,12,SY?'#ff9f43':'#b9aecb','left');T('v34',788,H-12,11,'#6a5a90','right')}
+CHS.forEach((c,i)=>spr(CI[i],340+i*46,552+Math.sin(t*3+i)*4,i==SEL?44:36));T(TIPS[(t/4|0)%TIPS.length],400,230,13,'#9fe8ff');T('Best run: boss '+(SET.best||0)+'   Runs: '+(SET.runs||0),788,22,12,'#b9aecb','right');T('\u266a '+(mCur>=0?TN[mCur]:'click anywhere to start the music')+(SY?'  [BUILT-IN SYNTH: music folder not found next to game.html]':''),12,22,12,SY?'#ff9f43':'#b9aecb','left');T('v42',788,H-12,11,'#6a5a90','right')}
 const LORE2=['Chef Chaos was the First Cook. He guarded the Plate in the oven vault, and Hunger ate his recipes.','King Broccoli hid his shard in a royal garden and swore never to let Hunger taste a vegetable again.','Captain Soda sailed the shard across the Frozen Buffet. It fizzes with every storm he chases.','Donut Titan was the rim of the Plate. His glaze keeps the shard sweet and remembers Zach ancestors.','Colonel Chicken drilled the last army of the war. His nuggets still march in perfect formation.','Chairman Coffee never slept, so he saw every war loop. He bargains with the shard to stay awake.','Evil Zach is the Plate hunger given a face: what Zach becomes if he never says no.','The Hollow King ruled the Underground Kingdom until Hunger ate his name. The shard keeps his crown warm.','Chronos rewound the war again and again to dodge its ending. Each loop cracked the shard a little more.','Leviathan Prime drowned the war memories in the deep. The shard hums with every mistake it remembers.','The Crimson Emperor tried to rule Hunger itself. The shard bled through his crown and made him cruel.','The False Hero is built from every run you will ever finish. He holds the shard of what could have been.','The Hunger is not the enemy. It is the oldest wanting, and it kept the final shard as a promise.','The Forgotten Creator wrote the Plate as a first draft of a kinder world, and left the pen for you.'];
 const CABold=[[['Feast Wave',9,'#ffd24a',()=>{const p=g.p,b=g.b;g.eb=g.eb.filter(e=>Math.hypot(e.x-p.x,e.y-p.y)>230);ring2(p.x,p.y,'#ffd24a',.6,700);em(p.x,p.y,80,{c:'#ffe27a',s:500,l:.7,r:5});if(Math.hypot(b.x-p.x,b.y-p.y)<330&&b.inv<=0)b.hp-=90;g.shake=.5}],['Bottomless Plate',20,'#fff3b0',()=>{g.shd=(g.shd||0)+2;g.p.hp=Math.min(g.p.mh,g.p.hp+.5)}],['Hunger Surge',24,'#ff4d6d',()=>{g.sg2=8}]],
 [['Ground Slam',9,'#ff9d2e',()=>{const p=g.p,b=g.b;g.eb=g.eb.filter(e=>Math.hypot(e.x-p.x,e.y-p.y)>200);ring2(p.x,p.y,'#ff9d2e',.7,600);em(p.x,p.y,90,{c:'#c9a27a',s:450,l:.8,r:5,g:500});if(Math.hypot(b.x-p.x,b.y-p.y)<260&&b.inv<=0)b.hp-=140;g.shake=.8}],['Iron Wall',16,'#9aa5b1',()=>{g.refl=3.5}],['Borg Overdrive',26,'#4cc9f0',()=>{g.od=6}]],
@@ -573,7 +573,7 @@ function foodBgOld(){const t=tm;X.fillStyle='#1a0f2e';X.fillRect(0,420,W,180);fo
 function swing(a0,dm){if(((g.cmb=(g.cmb||0)+1)%3)==0){dm*=1.8;ring2(g.p.x+Math.cos(a0)*70,g.p.y+Math.sin(a0)*70,'#ff9d2e',.4,420);g.shake=Math.max(g.shake,.25)}const p=g.p,b=g.b,ok=(x,y)=>Math.abs(Math.atan2(Math.sin(Math.atan2(y-p.y,x-p.x)-a0),Math.cos(Math.atan2(y-p.y,x-p.x)-a0)))<1.15;for(let i=-6;i<=6;i++){const a=a0+i*.17;em(p.x+Math.cos(a)*70,p.y+Math.sin(a)*70,2,{c:'#ffd9a0',s:120,l:.25,r:4})}ring2(p.x+Math.cos(a0)*50,p.y+Math.sin(a0)*50,'#ffd9a0',.25,260);
 /* Mason melee swings must never remove or alter enemy bullets. */
 if(Math.hypot(b.x-p.x,b.y-p.y)<150+b.sz*.5&&ok(b.x,b.y)&&b.inv<=0){b.hp-=dm*2.2;b.hit=.08;fxHitB(b.x,b.y);sfx('hit');g.shake=Math.max(g.shake,.15)}}
-function chAtk(a0,dm,n){const p=g.p,c=g.pc||0;if(c==1)swing(a0,dm);else if(c==2){for(let i=0;i<3;i++)sh(p.x,p.y,a0+(i-1)*.3,500,dm*.9,{bo:1})}else if(c==3){for(let i=0;i<n;i++)sh(p.x,p.y,a0+(i-(n-1)/2)*.2+(R()-.5)*.1,640,dm,{lf:.2})}else if(c==4){g.cp=(g.cp||0)+1;if(g.cp%4==0)sh(p.x,p.y,a0,430,dm*2.6,{big:1,mega:1});else sh(p.x,p.y,a0+(R()-.5)*.1,540,dm*1.5,{big:1})}else{for(let i=0;i<n;i++)sh(p.x,p.y,a0+(i-(n-1)/2)*.14+(R()-.5)*.03,600,dm)}}
+function chAtk(a0,dm,n){const p=g.p,c=g.pc||0;if(c==1)swing(a0,dm);else if(c==2){for(let i=0;i<3;i++)sh(p.x,p.y,a0+(i-1)*.3,500,dm*.9,{bo:1})}else if(c==3){for(let i=0;i<n;i++)sh(p.x,p.y,a0+(i-(n-1)/2)*.2+(R()-.5)*.1,640,dm,{lf:.2})}else if(c==4){g.cp=(g.cp||0)+1;if(g.cp%4==0)sh(p.x,p.y,a0,430,dm*2.6,{big:1,mega:1});else sh(p.x,p.y,a0+(R()-.5)*.1,540,dm*1.5,{big:1})}else if(c===5){/* Max's basic shots deal 20% less damage than the standard fighter volley. */for(let i=0;i<n;i++)sh(p.x,p.y,a0+(i-(n-1)/2)*.14+(R()-.5)*.03,600,dm*.8,{c:'#65f4ff'})}else{for(let i=0;i<n;i++)sh(p.x,p.y,a0+(i-(n-1)/2)*.14+(R()-.5)*.03,600,dm)}}
 const SI=[0,1,2,3,4,5,6,9,10,11,13,14,7,12];
 const SHP=[(r)=>{poly('#dfe6ee',-r*.5,-r*.6,r*2.6,0,-r*.5,r*.6);rr(-r*2,-r*.3,r*1.5,r*.6,'#7a4a2a',2)},(r)=>{X.fillStyle='#5fd36c';X.beginPath();X.ellipse(0,0,r*1.8,r*.9,0,0,PI2);X.fill();X.strokeStyle='#1e6b2a';X.lineWidth=1.5;X.beginPath();X.moveTo(-r*1.8,0);X.lineTo(r*1.8,0);X.stroke()},(r)=>{X.strokeStyle='#9fe8ff';X.lineWidth=2.5;X.beginPath();X.arc(0,0,r,0,PI2);X.stroke();ball(-r*.3,-r*.3,r*.25,'#fff','#fff')},(r)=>{X.strokeStyle='#ff7eb6';X.lineWidth=r*.7;X.beginPath();X.arc(0,0,r*.7,0,PI2);X.stroke();X.strokeStyle='#fff';X.lineWidth=1.5;X.setLineDash([3,4]);X.beginPath();X.arc(0,0,r*.7,0,PI2);X.stroke();X.setLineDash([])},(r)=>{X.fillStyle='#e0a23a';X.beginPath();X.moveTo(-r*1.2,-r*.5);X.quadraticCurveTo(-r*.2,-r*1.3,r*1.1,-r*.7);X.quadraticCurveTo(r*1.5,0,r*1.1,r*.7);X.quadraticCurveTo(-r*.2,r*1.2,-r*1.2,r*.5);X.closePath();X.fill();ball(-r*.2,-r*.2,r*.5,'#ffe9a8','#e0a23a')},(r)=>{X.fillStyle='#6b3f1f';X.beginPath();X.ellipse(0,0,r*1.3,r*.9,0,0,PI2);X.fill();X.strokeStyle='#e8c39e';X.lineWidth=1.5;X.beginPath();X.moveTo(-r,0);X.quadraticCurveTo(0,-r*.5,r,0);X.stroke()},(r)=>poly('#c08bff',r*2,0,r*.4,r*.4,0,r*1.6,-r*.4,r*.4,-r*2,0,-r*.4,-r*.4,0,-r*1.6,r*.4,-r*.4),(r)=>{rr(-r*2,-r*.3,r*3.4,r*.6,'#e8e2d0',2);poly('#e8e2d0',r*1.4,-r*.8,r*2.6,0,r*1.4,r*.8);ball(-r*1.9,0,r*.5,'#e8e2d0','#b8b09a')},(r)=>{poly('#ffd24a',-r*2.4,0,0,-r*.45,r*2.6,0,0,r*.45);X.strokeStyle='#ffd24a';X.lineWidth=2;X.beginPath();X.arc(-r*1.8,0,r*.7,0,PI2);X.stroke()},(r)=>{X.fillStyle='#4cc9f0';X.beginPath();X.moveTo(r*2.2,0);X.quadraticCurveTo(0,-r*1.3,-r*1.2,0);X.quadraticCurveTo(0,r*1.3,r*2.2,0);X.fill()},(r)=>{poly('#e5383b',-r*2,-r*.35,r*1.2,-r*.35,r*2.8,0,r*1.2,r*.35,-r*2,r*.35);poly('#7a0b14',-r*2,-r*.9,-r*1.2,0,-r*2,r*.9)},(r)=>{poly('#8ecae6',r*2,0,0,-r*.9,-r*1.4,0,0,r*.9);poly('#fff',r*.9,0,0,-r*.3,-r*.5,0,0,r*.3)},(r)=>{ball(0,0,r*1.1,'#2a0b4d','#02000a');X.strokeStyle='#a855f7';X.lineWidth=2;X.beginPath();X.arc(0,0,r*1.1,0,PI2);X.stroke()},(r)=>poly('#fff3b0',r*2.2,0,r*.35,r*.35,0,r*2.2,-r*.35,r*.35,-r*2.2,0,-r*.35,-r*.35,0,-r*2.2,r*.35,-r*.35)];
 const TRL=[{g:-60},{g:40,c:'#7dff8a'},{g:-30,c:'#9fe8ff'},{c:'#ffb3d9'},{c:'#ffcf5a'},{c:'#e8c39e'},{c:'#c08bff'},{g:-80,c:'#b57bff'},{c:'#ffd24a',s:5},{g:260,c:'#8be9ff'},{g:200,c:'#e5383b'},{c:'#8ecae6'},{c:'#a855f7'},{c:'#fff3b0'}];
@@ -1201,7 +1201,7 @@ if(g.dk>0){g.dk-=dt;if(R()<.6)P.push({x:R()*W,y:H,vx:0,vy:-120-R()*120,l:0,m:1.5
 if(g.met){g.met.t-=dt;const w=1-g.met.t/.9;em(b.x+260*(1-w),-40+(b.y+40)*w,3,{c:'#ff9d2e',s:80,l:.5,r:5,g:-30});g.zm=1+.07*w}
 if(g.drg>0){g.drg-=dt;g.fb=(g.fb||0)-dt;if(g.fb<=0){g.fb=.05;const a=Math.atan2(b.y-p.y,b.x-p.x)+(R()-.5)*.25;sh(p.x,p.y,a,650,9);em(p.x+Math.cos(a)*22,p.y+Math.sin(a)*22,2,{c:'#ff8a2a',s:160,l:.35,r:4})}}
 if(u.meteor&&u.chain&&b.ls!=1){g.stt=(g.stt||4)-dt;if(g.stt<=0){g.stt=7;for(const e of['meteor','chain']){const c=g.cd[e];g.cd[e]=0;cast(e);g.cd[e]=c||0}g.spam=0}}
-for(const e of g.eb){if(g.frz>0)continue;if(e.hd>0){e.hd-=dt;e.a=(e.a||0)+dt;continue}if(e.ax){e.vx*=1+e.ax*dt;e.vy*=1+e.ax*dt}if(e.g)e.vy+=e.g*dt;e.a=(e.a||0)+dt;
+for(const e of g.eb){if(e.maxAuraSlow>0)e.maxAuraSlow=Math.max(0,e.maxAuraSlow-dt);if(g.frz>0)continue;if(e.hd>0){e.hd-=dt;e.a=(e.a||0)+dt;continue}if(e.ax){e.vx*=1+e.ax*dt;e.vy*=1+e.ax*dt}if(e.g)e.vy+=e.g*dt;e.a=(e.a||0)+dt;
 if(e.w){const c=Math.cos(e.w*dt),s=Math.sin(e.w*dt),vx=e.vx;e.vx=vx*c-e.vy*s;e.vy=vx*s+e.vy*c}
 if(e.hm){const a=Math.atan2(p.y-e.y,p.x-e.x),v=Math.hypot(e.vx,e.vy);e.vx+=(Math.cos(a)*v-e.vx)*dt*e.hm;e.vy+=(Math.sin(a)*v-e.vy)*dt*e.hm}
 if(e.bn&&(e.y>H-10||e.y<10)){e.vy*=-1;e.bn--;e.y=Math.max(11,Math.min(H-11,e.y))}
@@ -1226,6 +1226,7 @@ else if(e.ax){X.beginPath();X.moveTo(r*2.2,0);X.lineTo(0,r*.8);X.lineTo(-r*1.4,0
 else{X.beginPath();X.arc(0,0,r,0,PI2);X.fill();if(g.b.ls==1){X.strokeStyle='#000c';X.lineWidth=1.8;X.globalAlpha=.85;X.stroke();X.globalAlpha=.95}if(r>=11){X.strokeStyle='#fff';X.lineWidth=2;X.globalAlpha=.6;X.beginPath();X.arc(0,0,r*.65,0,PI2);X.stroke()}}
 if(SET.hc){X.strokeStyle='#fff';X.lineWidth=2;X.globalAlpha=1;X.beginPath();X.arc(0,0,r+1,0,PI2);X.stroke()}
 if(e.fz!==undefined){X.strokeStyle=e.fc||'#fff';X.globalAlpha=.8;X.lineWidth=2;X.beginPath();X.arc(0,0,r*(1.6+Math.sin(tm*20)*.3),0,PI2);X.stroke()}
+if((e.maxAuraSlow||0)>0){X.strokeStyle='#65f4ff';X.globalAlpha=Math.min(.8,(e.maxAuraSlow||0)*4);X.lineWidth=1.5;X.beginPath();X.arc(0,0,r+2,0,PI2);X.stroke()}
 X.globalAlpha=1;X.fillStyle='#fff';X.beginPath();X.arc(0,0,r*.4,0,PI2);X.fill();X.restore()}
 const PL=[['Now the real cooking begins!','You are overcooked, kid!','Fire in the kitchen!','I was a legend before you ate!'],['The garden fights back!','Roots run deeper than you know.','You cannot compost a king!','Eat. Your. Greens.'],['The tide is turning, landlubber!','Shake the seas!','All hands, fizz and fury!','I will go down fizzing!'],['You made me glaze over!','Sprinkles! Everywhere! Forever!','I was a moon once!','I am round, but never gone!'],['Squad, second wave!','Air support inbound!','Extra crispy tactics!','No retreat, no refunds!'],['Faster. Faster. FASTER.','Is that all you have?','I can see sound!','Sleep... is... weakness!'],['I know every move you will make.','We are the same, you and me.','Do not look away!','Hungry... so hungry...'],['You are all insignificant.','I was before the stars!','Come closer, little feast.','You cannot satisfy me!']];
 const DX=[[['B|This kitchen is older than your city, boy.','Z|Then why does it smell like pancakes?'],['N|Chef Chaos lowers his ladle. Somewhere, an oven cools.']],[['B|Every vegetable here swore an oath to feed you properly.'],['N|The garden falls silent. A tiny sprout waves from the rubble.']],[['B|My crew sailed the Frozen Buffet and returned fizzier.','Z|That is not how thawing works.'],['N|Captain Soda sinks into a puddle of root beer, smiling.']],[['B|I knew your great-great-grandmother, little one.','Z|She sealed The Hunger with a spoon, right?','B|A very large spoon.'],['N|Donut Titan drifts off, trailing sprinkles like stars.']],[['B|Intel says you fear nothing but an empty plate.'],['N|Colonel Chicken salutes as his nugget squad crumbles.']],[['B|I have not slept since the Banquet War ended.','Z|Maybe you should.'],['N|The Last Chef watches from the shadows, taking notes.']],[['B|I am what you become if you never say no to seconds.','Z|You are the Hunger\'s puppet.','B|The Plate chose us both. It chose poorly.'],['N|The dark Plate cracks. Something vast stirs beyond it.']],[['N|The arena dissolves. Only void remains.','B|I was the first desire. Before stars. Before names.','Z|You made everything... then you ate it.'],['N|Silence. Then, for the first time ever, the void is not hungry.']]];
@@ -1445,7 +1446,7 @@ X.save();X.translate(b.x,b.y);X.rotate(tm*.3);X.globalCompositeOperation='lighte
 if(SET.sg){X.save();X.globalCompositeOperation='lighter';{const pu=1+.1*Math.sin(tm*5)+(b.hit>0?.25:0);glowAt(b.x,b.y,b.sz*3.4*pu,b.c,.5+.08*b.p0);glowAt(b.x,b.y,b.sz*1.6*pu,'#ffffff',.18+(b.hit>0?.25:0))}X.restore()}
 spr(SI[b.idx],b.x,b.y,b.sz*2.2*(b.hit>0?1.07:1)*(b.d[0]=='The Hunger'?1.4:1)*(1+b.p0*.03)*(1+Math.max(0,b.sq||0)*.5)*(b.ls==1?1+lsBeat*.12:1));if(b.p0>=2){X.strokeStyle=b.c;X.globalAlpha=.35;X.lineWidth=3;X.beginPath();X.arc(b.x,b.y,b.sz*(1.7+.15*Math.sin(tm*6)),0,PI2);X.stroke();X.globalAlpha=1}
 if(b.inv>0){X.strokeStyle='#9fe8ff';X.globalAlpha=.5+.3*Math.sin(tm*20);X.lineWidth=4;X.beginPath();X.arc(b.x,b.y,b.sz*1.5,0,PI2);X.stroke();X.globalAlpha=1}
-X.globalCompositeOperation='lighter';for(const s of g.pb){if(s.bo){X.save();X.translate(s.x,s.y);X.rotate(tm*18);if(s.big)X.scale(2.2,2.2);poly('#c98a5a',-12,-3,12,-3,12,3,-12,3);ball(-12,0,4.5,'#e8c39e','#a8702a');X.restore();continue}if(s.big){const r0=s.mega?15:9;ball(s.x,s.y,r0,'#ffb84d','#c9651f');if(s.mega){X.strokeStyle='#fff3b0';X.lineWidth=2;X.beginPath();X.arc(s.x,s.y,r0+3+Math.sin(tm*20)*1.5,0,PI2);X.stroke()}continue}if(SET.sg)glowAt(s.x,s.y,20,'#ffd54a',.7);X.strokeStyle='#ffd54a';X.lineWidth=5;X.globalAlpha=.8;X.lineCap='round';X.beginPath();X.moveTo(s.x,s.y);X.lineTo(s.x-s.vx*.03,s.y-s.vy*.03);X.stroke();X.strokeStyle='#fff';X.lineWidth=2;X.stroke()}
+X.globalCompositeOperation='lighter';for(const s of g.pb){if(s.bo){const tt=s.batStyle==='tripleT'||Number(s.ownerChar)===2||((s.ownerChar===undefined)&&g.pc===2),cc=s.c||(tt?'#2ec4b6':'#c98a5a'),ed=tt?'#b57bff':'#e8c39e';X.save();X.translate(s.x,s.y);X.rotate(tm*(tt?11:18)+(s.t||0));if(s.big)X.scale(tt?1.85:2.2,tt?1.85:2.2);X.shadowColor=cc;X.shadowBlur=tt?10:4;X.fillStyle=cc;X.beginPath();X.moveTo(0,6);X.lineTo(-11,-4);X.lineTo(-10,-11);X.lineTo(-4,-7);X.lineTo(0,-13);X.lineTo(4,-7);X.lineTo(10,-11);X.lineTo(11,-4);X.closePath();X.fill();X.shadowBlur=0;X.strokeStyle=ed;X.lineWidth=1.25;X.beginPath();X.moveTo(-7,-1);X.lineTo(-1,4);X.lineTo(0,6);X.lineTo(1,4);X.lineTo(7,-1);X.stroke();X.fillStyle='#fff';X.beginPath();X.arc(0,-2,1.7,0,PI2);X.fill();X.restore();continue}if(s.big){const r0=s.mega?15:9;ball(s.x,s.y,r0,'#ffb84d','#c9651f');if(s.mega){X.strokeStyle='#fff3b0';X.lineWidth=2;X.beginPath();X.arc(s.x,s.y,r0+3+Math.sin(tm*20)*1.5,0,PI2);X.stroke()}continue}if(SET.sg)glowAt(s.x,s.y,20,'#ffd54a',.7);X.strokeStyle='#ffd54a';X.lineWidth=5;X.globalAlpha=.8;X.lineCap='round';X.beginPath();X.moveTo(s.x,s.y);X.lineTo(s.x-s.vx*.03,s.y-s.vy*.03);X.stroke();X.strokeStyle='#fff';X.lineWidth=2;X.stroke()}
 for(const e of g.eb){if(SET.sg&&SET.glow)glowAt(e.x,e.y,e.r*3.4,e.c,.55);if(SET.sg&&FXO.sk){X.strokeStyle=e.c;X.globalAlpha=.35;X.lineWidth=e.r*1.2;X.lineCap='round';X.beginPath();X.moveTo(e.x,e.y);X.lineTo(e.x-e.vx*.06,e.y-e.vy*.06);X.stroke();X.globalAlpha=1}bdraw(e)}X.globalCompositeOperation='source-over';X.globalAlpha=1;
 for(let i=0;i<(g.u.taco||0);i++){const a=g.t*3+i*PI2/g.u.taco;ic('taco',g.p.x+Math.cos(a)*70,g.p.y+Math.sin(a)*70,28+g.i*2)}
 for(let i=0;i<(g.u.fol||0);i++)ic('fol',g.p.x+(i%2?1:-1)*(24+i*8),g.p.y+22,18);
@@ -1949,8 +1950,8 @@ SPR[22]=()=>{
   rr(-8,20,6,7,'#182238',2);rr(2,20,6,7,'#182238',2);
 };
 CI.push(22);
-CHS.push(['Max','Aura Striker','A radiant aura damages nearby foes.|Laser blasts fire from his shades.']);
-CHD.push('Max is a cool-headed aura striker. His cyan-purple aura burns nearby enemies, and his sunglasses can focus it into a piercing laser.');
+CHS.push(['Max','Aura Striker','Aura damages foes and slows bullets.|Laser blasts fire from his shades.']);
+CHD.push('Max is a cool-headed aura striker. His cyan-purple aura pulses lighter damage more quickly and slows incoming bullets instead of deleting them; his sunglasses focus it into a piercing laser.');
 CHB.push([0,1.08,1.0,1.0,{}]);
 CABD[1][1]='Reflects enemy bullets for 4 seconds. This is Mason’s dedicated counter ability, not a passive.';
 CHS[1][2]='+2 hearts, 3-hit combo.|Reflects only with Aegis Counter.';
@@ -1992,7 +1993,7 @@ function maxFireLaser(p,a,ownerId){
   g.maxLaser={x:ox,y:oy,a,t:.38,life:.38,ownerId:ownerId||'host',color:'#65f4ff'};
   const vx=b.x-ox,vy=b.y-oy,along=vx*dx+vy*dy,side=Math.abs(vx*dy-vy*dx);
   if(b.inv<=0&&b.ls!==1&&along>0&&along<1050&&side<(Number(b.sz)||40)*.72+16){
-    b.hp-=285*CHB[5][3]*(g.bonus||1);b.hit=.15;fxHitB(b.x,b.y);ring2(b.x,b.y,'#65f4ff',.35,300);em(b.x,b.y,40,{c:'#65f4ff',s:300,l:.5,r:3});g.shake=Math.max(g.shake||0,.28);
+    b.hp-=210*CHB[5][3]*(g.bonus||1);b.hit=.15;fxHitB(b.x,b.y);ring2(b.x,b.y,'#65f4ff',.35,300);em(b.x,b.y,40,{c:'#65f4ff',s:300,l:.5,r:3});g.shake=Math.max(g.shake||0,.28);
   }
   ring2(ox,oy,'#65f4ff',.24,180);em(ox,oy,18,{c:'#65f4ff',s:260,l:.38,r:3});g.cast=['PRISM LASER!',.95];sfx('cast');return true;
 }
@@ -2000,17 +2001,24 @@ function maxAuraTick(p,dt){
   if(!g||!g.b||!p||!Number.isFinite(Number(p.x))||!Number.isFinite(Number(p.y))||p.down>0||p.hp===0)return;
   p.maxAuraCd=Math.max(0,(Number(p.maxAuraCd)||0)-dt);
   p.maxAuraBoost=Math.max(0,(Number(p.maxAuraBoost)||0)-dt);
-  if(p.maxAuraCd>0)return;
   const boosted=p.maxAuraBoost>0,radius=boosted?148:108,b=g.b,dist=Math.hypot(b.x-p.x,b.y-p.y);
-  let cleared=0;
-  g.eb=g.eb.filter(e=>{if(Math.hypot(e.x-p.x,e.y-p.y)<radius*.52){cleared++;return false;}return true;});
+  // The passive aura no longer deletes enemy bullets. It continuously damps their
+  // velocity while they pass through the aura; overload applies a stronger slow.
+  const damping=Math.pow(boosted?.38:.55,Math.max(0,Math.min(.05,dt)));
+  for(const e of (g.eb||[])){
+    if(Math.hypot(e.x-p.x,e.y-p.y)<radius){
+      e.vx*=damping;e.vy*=damping;
+      e.maxAuraSlow=Math.max(Number(e.maxAuraSlow)||0,.2);
+    }
+  }
+  if(p.maxAuraCd>0)return;
   if(dist<radius+(Number(b.sz)||40)*.25&&b.inv<=0&&b.ls!==1){
-    b.hp-= (boosted?34:18)*CHB[5][3]*(g.bonus||1);b.hit=.05;
-    em(p.x,p.y,boosted?9:5,{c:boosted?'#65f4ff':'#b57bff',s:125,l:.32,r:2.5});
+    // Less damage per pulse, with a slightly quicker pulse cadence.
+    b.hp-=(boosted?24:12)*CHB[5][3]*(g.bonus||1);b.hit=.05;
+    em(p.x,p.y,boosted?8:5,{c:boosted?'#65f4ff':'#b57bff',s:125,l:.32,r:2.5});
     if(R()<.55)ring2(p.x,p.y,boosted?'#65f4ff':'#b57bff',.14,120);
   }
-  if(cleared>0)em(p.x,p.y,Math.min(8,cleared),{c:'#65f4ff',s:100,l:.25,r:2});
-  p.maxAuraCd=boosted?.2:.29;
+  p.maxAuraCd=boosted?.17:.25;
 }
 // Max's aura is authoritative on the host for both the host player and remote party members.
 const _zubMpUpdatePlayers39=mpUpdatePlayers;
@@ -2143,5 +2151,197 @@ mpBroadcastLobby=function(){
 };
 LOG.unshift(['v39 (latest)','Added Max, a sunglasses-wearing Aura Striker with a damage aura, piercing sunglasses laser, aura burst, and aura overload. Mason Borg no longer reflects bullets through his normal melee combo; reflection is now tied to the Aegis Counter ability. Added six-character selection on solo and multiplayer screens.']);
 LOG.unshift(["v40 (latest)","Mason Borg’s melee combo no longer destroys enemy bullets. Regular swings damage bosses only; Aegis Counter and separate projectile-clearing abilities remain unchanged."]);
+
+// v42: Triple T combat remake and a character-specific FX pass for every fighter ability.
+CHS[2]=['Triple T','Rift-bat showman','Blink strikes, batline volleys,|and a Moonbreaker power-up.'];
+CHD[2]='Triple T is a quick, showy bat trickster. Riftstep Rally blinks through danger, Batline Breaker launches a converging swarm, and Moonbreaker empowers returning bats for a short burst.';
+CABD[2]=[
+  'Blink toward the boss, leave shadow afterimages, and sling three heavy returning bats.',
+  'Clear nearby bullets, then launch a 9-bat converging barrage from a rotating formation.',
+  'For 7 seconds, every basic volley gains two extra returning bats. Opens with a moonlit bat ring.'
+];
+
+// Triple T redesign: neon cap, padded jersey, glove details and three floating rift-bats.
+SPR[19]=()=>{
+  const pulse=.5+.5*Math.sin(tm*7);
+  X.save();X.globalCompositeOperation='lighter';
+  X.globalAlpha=.24+pulse*.14;X.strokeStyle='#2ec4b6';X.lineWidth=1.5;X.beginPath();X.ellipse(0,5,26+pulse*2,31+pulse*2,tm*.18,0,PI2);X.stroke();
+  X.globalAlpha=.7;X.strokeStyle='#b57bff';X.lineWidth=1.2;X.beginPath();X.ellipse(0,5,31,25,-tm*.23,tm,tm+2.4);X.stroke();X.restore();
+  // Three orbiting bats are silhouettes, not sticks, so the character reads at small sizes.
+  for(let i=0;i<3;i++){
+    const a=-tm*2.2+i*PI2/3,rx=26+Math.sin(tm*4+i)*2,ry=11+Math.cos(tm*3+i)*2;
+    X.save();X.translate(Math.cos(a)*rx,-5+Math.sin(a)*ry);X.rotate(a+.4);X.globalCompositeOperation='lighter';
+    const cc=['#ffd24a','#2ec4b6','#b57bff'][i];X.shadowColor=cc;X.shadowBlur=10;X.fillStyle=cc;X.beginPath();X.moveTo(0,7);X.lineTo(-10,-4);X.lineTo(-9,-11);X.lineTo(-3,-7);X.lineTo(0,-12);X.lineTo(3,-7);X.lineTo(9,-11);X.lineTo(10,-4);X.closePath();X.fill();X.shadowBlur=0;ball(0,2,2.6,'#fff','#e8e8ff');X.restore();
+  }
+  // Deep teal varsity jacket, pale piping and gloves.
+  rr(-16,2,32,25,'#142b4a',7);rr(-12,5,24,16,'#1c526a',4);rr(-2,4,4,21,'#ffd24a',1);rr(-10,9,7,7,'#b57bff',2);T('T',-6.5,12,7,'#fff3b0');
+  rr(-20,8,8,16,'#2ec4b6',3);rr(12,8,8,16,'#2ec4b6',3);ball(-17,24,4,'#e9f7ff','#7ca3b8');ball(17,24,4,'#e9f7ff','#7ca3b8');
+  ball(0,-8,13,'#d9a77c','#8b5942');
+  // Hair and a luminous angled cap brim.
+  poly('#1d1529',-14,-10,-12,-22,-5,-18,1,-24,10,-18,14,-10,7,-14,-6,-13);
+  rr(-14,-20,28,7,'#173a66',3);poly('#2ec4b6',-8,-19,7,-19,16,-13,-8,-14);X.strokeStyle='#ffd24a';X.lineWidth=1.4;X.beginPath();X.moveTo(-10,-17);X.lineTo(8,-17);X.stroke();
+  ball(-5,-7,2.8,'#fff','#dceeff');ball(5,-7,2.8,'#fff','#dceeff');ball(-4.4,-6.8,1.3,'#111827','#111827');ball(5.6,-6.8,1.3,'#111827','#111827');
+  X.strokeStyle='#6e3540';X.lineWidth=1.8;X.beginPath();X.moveTo(-5,1);X.quadraticCurveTo(0,4,6,1);X.stroke();
+  // Shin pads and bright sneaker soles.
+  rr(-9,24,6,7,'#182238',2);rr(3,24,6,7,'#182238',2);rr(-12,29,11,3,'#ffd24a',1);rr(1,29,11,3,'#ffd24a',1);
+};
+
+// A remade, tighter Triple T basic volley: three distinct rift-bats with staggered speed.
+const _zubChAtkV42=chAtk;
+chAtk=function(a0,dm,n){
+  if(!g||!g.p||mpCharIndex(g.pc,0)!==2)return _zubChAtkV42(a0,dm,n);
+  const p=g.p,cols=['#b57bff','#2ec4b6','#ffd24a'];
+  for(let i=0;i<3;i++){
+    const off=(i-1)*.255,spd=i===1?545:490;
+    sh(p.x,p.y,a0+off,spd,dm*(i===1?.92:.78),{bo:1,big:1,lf:3.1,c:cols[i],batStyle:'tripleT'});
+  }
+  if(R()<.45)em(p.x,p.y,2,{c:'#2ec4b6',s:100,l:.2,r:2});
+};
+
+// New Triple T ability kit. Cooldowns continue using the game's standard character-ability system.
+CAB[2]=[
+ ['Riftstep Rally',10,'#b57bff',()=>{
+   const p=g.p,b=g.b,a=Math.atan2(b.y-p.y,b.x-p.x),ox=p.x,oy=p.y;
+   p.x=Math.max(18,Math.min(W-18,p.x+Math.cos(a)*185));p.y=Math.max(50,Math.min(H-18,p.y+Math.sin(a)*185));
+   p.inv=Math.max(Number(p.inv)||0,.9);
+   for(let i=0;i<=8;i++){const t=i/8,x=ox+(p.x-ox)*t,y=oy+(p.y-oy)*t;g.ai.push([x,y,.46*(1-t*.38)]);if(i%2===0)em(x,y,4,{c:i%4?'#b57bff':'#2ec4b6',s:140,l:.34,r:2.6});}
+   for(let i=-1;i<=1;i++)sh(p.x,p.y,a+i*.22,555,39,{bo:1,big:1,lf:3.1,c:['#b57bff','#2ec4b6','#ffd24a'][i+1],batStyle:'tripleT'});
+   const hitX=(ox+p.x)*.5,hitY=(oy+p.y)*.5;if(b.inv<=0&&Math.hypot(b.x-hitX,b.y-hitY)<170)b.hp-=74*CHB[2][3]*(g.bonus||1);
+   ring2(ox,oy,'#b57bff',.34,270);ring2(p.x,p.y,'#2ec4b6',.48,440);g.shake=Math.max(g.shake||0,.32);g.cast=['RIFTSTEP RALLY',1.1];
+ }],
+ ['Batline Breaker',14,'#2ec4b6',()=>{
+   const p=g.p,b=g.b;let cleared=0;
+   g.eb=g.eb.filter(e=>{if(Math.hypot(e.x-p.x,e.y-p.y)<175){cleared++;em(e.x,e.y,3,{c:'#2ec4b6',s:130,l:.28,r:2});return false}return true});
+   // Three rotating ranks of bats converge like a pinball combo, then return to Triple T.
+   for(let i=0;i<9;i++){
+     const orbit=i*PI2/9+tm*.28,ringR=52+(i%3)*11,x=p.x+Math.cos(orbit)*ringR,y=p.y+Math.sin(orbit)*ringR*.7;
+     const a=Math.atan2(b.y-y,b.x-x)+(i%3-1)*.12;
+     sh(x,y,a,500+(i%3)*45,31+(i%3)*4,{bo:1,big:1,lf:3.3,c:['#2ec4b6','#b57bff','#ffd24a'][i%3],batStyle:'tripleT'});
+   }
+   ring2(p.x,p.y,'#2ec4b6',.64,560);ring2(p.x,p.y,'#b57bff',.35,390);em(p.x,p.y,52,{c:'#2ec4b6',s:340,l:.6,r:3.5});
+   g.cast=['BATLINE BREAKER  /  '+cleared+' PROJECTILES CAUGHT',1.25];
+ }],
+ ['Moonbreaker Rally',22,'#ffd24a',()=>{
+   const p=g.p;g.ttNight=7;g.ttShot=0;p.inv=Math.max(Number(p.inv)||0,.45);
+   for(let i=0;i<12;i++)sh(p.x,p.y,i*PI2/12,425,19,{bo:1,big:1,lf:2.7,c:i%3===0?'#ffd24a':i%3===1?'#2ec4b6':'#b57bff',batStyle:'tripleT'});
+   ring2(p.x,p.y,'#ffd24a',.6,560);ring2(p.x,p.y,'#2ec4b6',.34,400);ring2(p.x,p.y,'#b57bff',.22,280);
+   em(p.x,p.y,62,{c:'#ffd24a',s:330,l:.62,r:3.5});g.cast=['MOONBREAKER RALLY — EXTRA BATS FOR 7s',1.35];
+ }]
+];
+
+// Palette and lifetime for the ability FX are deliberately kept compact so snapshots stay small.
+const ZUB_FX_PALETTES=[['#ffd24a','#ff4d6d','#fff3b0'],['#9fe8ff','#ff9d2e','#ffffff'],['#2ec4b6','#b57bff','#ffd24a'],['#7df9ff','#b57bff','#ffffff'],['#ffb84d','#c1121f','#fff3b0'],['#65f4ff','#b57bff','#ffffff']];
+let zubAbilityFxSerial=0;
+function zubPushAbilityFx(ch,j,x,y,ex,ey,bx,by,ownerId){
+  if(!g)return null;
+  if(!Array.isArray(g.zubAbilityFx))g.zubAbilityFx=[];
+  const char=Math.max(0,Math.min(5,Number(ch)||0)),ability=Math.max(0,Math.min(2,Number(j)||0));
+  const life=ability===2?1.4:1.22;
+  const fx={id:++zubAbilityFxSerial,char,ability,x:Number(x)||0,y:Number(y)||0,ex:Number(ex)||0,ey:Number(ey)||0,bx:Number(bx)||0,by:Number(by)||0,angle:Math.atan2((Number(by)||0)-(Number(y)||0),(Number(bx)||0)-(Number(x)||0)),t:life,life,ownerId:ownerId||'host',seed:(zubAbilityFxSerial*1.61803398875)%PI2};
+  g.zubAbilityFx.push(fx);if(g.zubAbilityFx.length>14)g.zubAbilityFx.splice(0,g.zubAbilityFx.length-14);
+  if(MP)MP._zubAbilityFxSerial=(Number(MP._zubAbilityFxSerial)||0)+1;
+  return fx;
+}
+
+// Local-host and solo casts go through cab(). Capturing before/after position gives dash abilities a real trail.
+const _zubCabV42=cab;
+cab=function(j){
+  const valid=!!(g&&g.p&&S==='play'&&Number.isInteger(j)&&j>=0&&j<3&&CAB[mpCharIndex(g.pc,0)]&&CAB[mpCharIndex(g.pc,0)][j]);
+  const k='c'+j,cd=valid?Number(g.cd&&g.cd[k])||0:0;
+  if(!valid||cd>0)return _zubCabV42(j);
+  const ch=mpCharIndex(g.pc,0),p=g.p,x=p.x,y=p.y,b=g.b,bx=b?b.x:p.x,by=b?b.y:p.y,pbStart=(g.pb||[]).length,playerId=p.id||'host';
+  _zubCabV42(j);
+  if((Number(g.cd&&g.cd[k])||0)>cd){
+    // Projectiles from a remote character ability keep their owner identity for return-to-player logic.
+    if(p.id&&Array.isArray(g.pb))for(let i=pbStart;i<g.pb.length;i++){g.pb[i].ownerId=p.id;g.pb[i].ownerChar=ch;g.pb[i].remote=1;}
+    const fx=zubPushAbilityFx(ch,j,x,y,p.x,p.y,bx,by,playerId);
+    if(fx&&ch===5&&j===0&&g.maxLaser)fx.angle=Number(g.maxLaser.a)||fx.angle;
+  }
+};
+
+// A few legacy multiplayer shortcuts execute without cab(); emit the same visual when they truly activate.
+const _zubMpRemoteAbilityV42=mpRemoteAbility;
+mpRemoteAbility=function(pl,j){
+  if(!pl)return _zubMpRemoteAbilityV42(pl,j);
+  const beforeFx=Number(MP&&MP._zubAbilityFxSerial)||0,beforeCd=Number(pl.abilityCd&&pl.abilityCd[j])||0;
+  _zubMpRemoteAbilityV42(pl,j);
+  const afterFx=Number(MP&&MP._zubAbilityFxSerial)||0,afterCd=Number(pl.abilityCd&&pl.abilityCd[j])||0;
+  const ch=mpCharIndex(pl.char,0);
+  if(afterFx===beforeFx&&afterCd>beforeCd){
+    const fx=zubPushAbilityFx(ch,j,pl.x,pl.y,pl.x,pl.y,g&&g.b?g.b.x:pl.x,g&&g.b?g.b.y:pl.y,pl.id);
+    if(fx&&ch===5&&j===0&&g&&g.maxLaser)fx.angle=Number(g.maxLaser.a)||fx.angle;
+  }
+  if(ch===2&&j===2&&afterCd>beforeCd)pl.ttNight=Math.max(Number(pl.ttNight)||0,7);
+};
+
+// Preserve which fighter fired a return-bat in co-op; guests get the same neon boomerang treatment.
+const _zubMpRemoteFireV42=mpRemoteFire;
+mpRemoteFire=function(pl,a,dm,n,allowEcho=true){
+  const start=g&&g.pb?g.pb.length:0,ch=mpCharIndex(pl&&pl.char,0),out=_zubMpRemoteFireV42(pl,a,dm,n,allowEcho);
+  if(g&&Array.isArray(g.pb))for(let i=start;i<g.pb.length;i++){
+    const s=g.pb[i];if(s.ownerChar===undefined)s.ownerChar=ch;
+    if(ch===2&&s.bo){s.batStyle='tripleT';s.c=s.c||['#b57bff','#2ec4b6','#ffd24a'][i%3];}
+  }
+  return out;
+};
+
+// Compact 2D drawing helpers for bespoke character ability effects.
+function zubArc(x,y,r,col,a0,a1,width=3,alpha=.8){X.save();X.globalAlpha=alpha;X.strokeStyle=col;X.lineWidth=width;X.lineCap='round';X.beginPath();X.arc(x,y,Math.max(1,r),a0,a1);X.stroke();X.restore();}
+function zubHex(x,y,r,col,alpha=.8,rot=0){X.save();X.globalAlpha=alpha;X.strokeStyle=col;X.lineWidth=2;X.beginPath();for(let i=0;i<6;i++){const a=rot+i*PI2/6,px=x+Math.cos(a)*r,py=y+Math.sin(a)*r;i?X.lineTo(px,py):X.moveTo(px,py)}X.closePath();X.stroke();X.restore();}
+function zubStar(x,y,r,col,rot=0,alpha=.8){X.save();X.translate(x,y);X.rotate(rot);X.globalAlpha=alpha;X.fillStyle=col;X.beginPath();for(let i=0;i<10;i++){const a=i*Math.PI/5,rr0=i%2?r*.42:r;const px=Math.cos(a)*rr0,py=Math.sin(a)*rr0;i?X.lineTo(px,py):X.moveTo(px,py)}X.closePath();X.fill();X.restore();}
+function zubDrawBat(x,y,s,a,c){X.save();X.translate(x,y);X.rotate(a);X.scale(s,s);X.globalCompositeOperation='lighter';X.shadowColor=c;X.shadowBlur=7;X.fillStyle=c;X.beginPath();X.moveTo(0,7);X.lineTo(-10,-4);X.lineTo(-9,-11);X.lineTo(-3,-7);X.lineTo(0,-12);X.lineTo(3,-7);X.lineTo(9,-11);X.lineTo(10,-4);X.closePath();X.fill();X.shadowBlur=0;X.strokeStyle='#ffffffcc';X.lineWidth=1;X.beginPath();X.moveTo(-6,-1);X.lineTo(-1,4);X.lineTo(0,7);X.lineTo(1,4);X.lineTo(6,-1);X.stroke();X.restore();}
+function zubDrawAbilityFx(){
+  if(!g||!Array.isArray(g.zubAbilityFx)||!['play','pause','dlg','pick','win','over','mpdead'].includes(S))return;
+  X.save();X.globalCompositeOperation='lighter';
+  for(const f of g.zubAbilityFx){
+    if(!f||!Number.isFinite(Number(f.t))||f.t<=0)continue;
+    const p=Math.max(0,Math.min(1,1-f.t/(f.life||1))),fade=Math.max(0,1-p),ch=Math.max(0,Math.min(5,Number(f.char)||0)),j=Math.max(0,Math.min(2,Number(f.ability)||0)),pal=ZUB_FX_PALETTES[ch],c1=pal[0],c2=pal[1],c3=pal[2];
+    const x=Number(f.ex)||0,y=Number(f.ey)||0,bx=Number(f.bx)||x,by=Number(f.by)||y,ang=Number(f.angle)||0,base=24+p*105;
+    X.globalAlpha=.16*fade;const glow=X.createRadialGradient(x,y,2,x,y,base+35);glow.addColorStop(0,c1+'aa');glow.addColorStop(.6,c2+'33');glow.addColorStop(1,c1+'00');X.fillStyle=glow;X.beginPath();X.arc(x,y,base+35,0,PI2);X.fill();
+    zubArc(x,y,base,c1,-Math.PI*.15+p*1.2,Math.PI*1.25+p*1.2,3,fade*.82);zubArc(x,y,base*.72,c2,Math.PI+p*1.4,PI2+Math.PI+p*1.4,2,fade*.68);
+    if(ch===0){ // Zach: bite-shaped crescents and golden meal sparks.
+      zubArc(x,y,base*.9, c3,ang-.95,ang+.95,5,fade*.9);zubArc(x,y,base*.64,c2,ang+Math.PI-.8,ang+Math.PI+.8,2.5,fade*.8);
+      for(let i=0;i<9;i++){const a=i*PI2/9+f.seed+p*2,r=25+p*75;zubStar(x+Math.cos(a)*r,y+Math.sin(a)*r,3.5*(1-p*.4),i%3?c1:c3,a,fade*.8);}
+    }else if(ch===1){ // Mason: reactor core, hex armour and ground-shatter lines.
+      if(j===0){for(let i=0;i<12;i++){const a=i*PI2/12+f.seed,rr0=base*(.35+(i%3)*.24);X.globalAlpha=fade*.75;X.strokeStyle=i%2?c1:c2;X.lineWidth=i%3===0?3:1.5;X.beginPath();X.moveTo(x+Math.cos(a)*10,y+Math.sin(a)*10);X.lineTo(x+Math.cos(a+.08)*rr0,y+Math.sin(a+.08)*rr0);X.stroke();}zubArc(x,y,base,c2,0,PI2,3,fade*.8);}
+      else if(j===1){for(let i=0;i<6;i++){const a=i*PI2/6+tm*.8;zubHex(x+Math.cos(a)*24,y+Math.sin(a)*20,17,c1,fade*.9,a); }zubHex(x,y,39,c3,fade*.85,tm*.15);}
+      else{for(let side of[-1,1]){zubArc(x+side*18,y+3,base*.67,c1,side>0?-.95:Math.PI-.95,side>0?.95:Math.PI+.95,7,fade*.9);zubArc(x+side*18,y+3,base*.45,c2,side>0?-.7:Math.PI-.7,side>0?.7:Math.PI+.7,2,fade*.85);}zubStar(x,y,19,c3,tm,fade*.7);}
+    }else if(ch===2){ // Triple T: an obvious bat silhouette language across all three abilities.
+      if(j===0){X.globalAlpha=fade*.55;X.strokeStyle=c2;X.lineWidth=4;X.setLineDash([9,6]);X.beginPath();X.moveTo(Number(f.x)||x,Number(f.y)||y);X.quadraticCurveTo((Number(f.x)+x)*.5,(Number(f.y)+y)*.5-40,x,y);X.stroke();X.setLineDash([]);for(let i=0;i<6;i++){const u=i/5,bx0=(Number(f.x)||x)+(x-(Number(f.x)||x))*u,by0=(Number(f.y)||y)+(y-(Number(f.y)||y))*u;zubDrawBat(bx0,by0,1.05-u*.35,ang+(1-u)*.8,i%2?c1:c2);}}
+      else if(j===1){for(let i=0;i<9;i++){const a=i*PI2/9-f.seed+p*1.4,rr0=28+(1-p)*50,tx=x+Math.cos(a)*rr0,ty=y+Math.sin(a)*rr0*.72,tx2=tx+(bx-tx)*p*.65,ty2=ty+(by-ty)*p*.65;X.globalAlpha=fade*.35;X.strokeStyle=i%2?c1:c2;X.lineWidth=1.2;X.beginPath();X.moveTo(tx,ty);X.lineTo(tx2,ty2);X.stroke();zubDrawBat(tx2,ty2,1.05,Math.atan2(by-ty2,bx-tx2),i%3===0?c3:i%2?c1:c2);}zubArc(x,y,base*.95,c3,0,PI2,2.5,fade*.6);}
+      else{for(let i=0;i<3;i++){const a=tm*1.5+p*2+i*PI2/3;zubDrawBat(x+Math.cos(a)*base*.62,y+Math.sin(a)*base*.42,1.2,a+(Math.PI/2),[c1,c2,c3][i]);}zubArc(x,y,base*.78,c3,tm,tm+Math.PI*1.5,3,fade*.85);zubArc(x,y,base*.5,c2,-tm, -tm+Math.PI*1.5,2,fade*.7);}
+    }else if(ch===3){ // Naoya: lightning forks and afterimage chevrons.
+      for(let side of[-1,1]){X.globalAlpha=fade*.85;X.strokeStyle=side<0?c1:c2;X.lineWidth=2.5;X.beginPath();X.moveTo(x+side*14,y+24);X.lineTo(x+side*30,y+3);X.lineTo(x+side*14,y-3);X.lineTo(x+side*39,y-36*p);X.stroke();}
+      zubArc(x,y,base*.86,c1,ang-.65,ang+.65,4,fade*.8);for(let i=0;i<4;i++){const u=i/4;zubStar(x-Math.cos(ang)*u*base*.8,y-Math.sin(ang)*u*base*.8,5-u*2,c2,ang,fade*.7);}
+    }else if(ch===4){ // Cartman: comic impact burst, cheese wedges and snack debris.
+      if(j===0){const mx=x+(bx-x)*p*.75,my=y+(by-y)*p*.75;zubStar(mx,my,18+p*25,c1,f.seed,fade*.85);zubArc(mx,my,base*.75,c3,0,PI2,3,fade*.8);for(let i=0;i<7;i++){const a=i*PI2/7+f.seed;X.save();X.translate(mx+Math.cos(a)*base*.45,my+Math.sin(a)*base*.45);X.rotate(a);poly(c1,-7,-6,8,0,-7,6);X.restore();}}
+      else if(j===1){zubArc(x,y,base*.9,c3,0,PI2,5,fade*.7);for(let i=0;i<8;i++){const a=i*PI2/8+tm*.4;X.save();X.translate(x+Math.cos(a)*base*.55,y+Math.sin(a)*base*.55);X.rotate(a);poly(c1,-7,-5,9,0,-7,5);X.restore();}zubStar(x,y,18,c2,tm,fade*.7);}
+      else{for(let i=0;i<7;i++){const xx=x+(i-3)*19,yy=(by-100)+p*210+Math.sin(i*2+tm)*9;zubStar(xx,yy,5+(i%2)*2,i%2?c1:c3,tm+i,fade*.65);}zubArc(x,y,base*.6,c2,0,PI2,2,fade*.65);}
+    }else{ // Max: prism glass, aura petals, and refracted laser strips.
+      if(j===0){const len=150+p*540;X.globalAlpha=fade*.85;X.lineCap='round';X.shadowColor=c1;X.shadowBlur=14;for(const [cc,w]of[[c1,8],[c2,4],[c3,1.5]]){X.strokeStyle=cc;X.lineWidth=w;X.beginPath();X.moveTo(x,y-7);X.lineTo(x+Math.cos(ang)*len,y-7+Math.sin(ang)*len);X.stroke();}X.shadowBlur=0;zubHex(x,y,18,c3,fade,ang);}
+      else if(j===1){for(let i=0;i<10;i++){const a=i*PI2/10+tm*.25,r0=base*(.45+((i%2)*.13));X.globalAlpha=fade*.72;X.strokeStyle=i%2?c1:c2;X.lineWidth=2;X.beginPath();X.moveTo(x+Math.cos(a)*18,y+Math.sin(a)*18);X.quadraticCurveTo(x+Math.cos(a+.35)*r0,y+Math.sin(a+.35)*r0,x+Math.cos(a+.7)*r0*1.15,y+Math.sin(a+.7)*r0*1.15);X.stroke();}zubArc(x,y,base*.7,c3,0,PI2,2,fade*.8);}
+      else{for(let i=0;i<4;i++){const a=tm*.4+i*Math.PI/4,rr0=base*(.42+i*.08);X.globalAlpha=fade*.8;X.strokeStyle=i%2?c1:c2;X.lineWidth=2;X.beginPath();X.moveTo(x+Math.cos(a)*rr0,y+Math.sin(a)*rr0);X.lineTo(x+Math.cos(a+Math.PI/2)*rr0*.6,y+Math.sin(a+Math.PI/2)*rr0*.6);X.lineTo(x+Math.cos(a+Math.PI)*rr0,y+Math.sin(a+Math.PI)*rr0);X.stroke();}zubHex(x,y,base*.6,c3,fade*.8,tm);}
+    }
+  }
+  X.restore();
+}
+
+// Ability FX age on the authoritative simulation; guests receive the compact FX state with each snapshot.
+const _zubUpdV42=upd;
+upd=function(dt){
+  _zubUpdV42(dt);
+  if(g&&Array.isArray(g.zubAbilityFx)){
+    for(const f of g.zubAbilityFx)if(f)f.t=Math.max(0,(Number(f.t)||0)-Math.max(0,Number(dt)||0));
+    g.zubAbilityFx=g.zubAbilityFx.filter(f=>f&&f.t>0);
+  }
+};
+
+// Put effect overlays after the ordinary frame; the effects stay synchronized because they are in g snapshots.
+const _zubDrawV42=draw;
+draw=function(){_zubDrawV42();zubDrawAbilityFx();};
+
+CHS[2][2]='Blink strikes, converging bat volleys,|and a Moonbreaker power-up.';
+TIPS.push('Triple T tip: Riftstep Rally blinks forward; Moonbreaker adds two bats to every shot.');
+LOG.unshift(['v42 (latest)','Remade Triple T as a rift-bat showman with a new three-bat primary volley, Riftstep Rally, Batline Breaker and Moonbreaker Rally. Added bespoke animated visual effects for all 18 character abilities, plus owner-aware neon boomerang styling for co-op.']);
 
 </script></body></html>

@@ -1,12 +1,17 @@
-ZACH'S ULTIMATE BUFFET — v39
+ZACH'S ULTIMATE BUFFET — v42
 
 HOW TO UPDATE GITHUB PAGES
 1. Extract this ZIP.
-2. In your existing repository, replace index.html and game.html, and keep/upload the existing cartman.png and music folder as-is.
-3. Commit to main and wait for GitHub Pages to deploy.
-4. Open the published HTTPS URL in both browsers and hard-refresh with Ctrl+F5.
+2. In your existing repository, replace index.html and game.html with these v42 files.
+3. Keep/upload cartman.png and the music folder alongside the HTML files.
+4. Commit changes to main and wait for GitHub Pages to deploy.
+5. Open the published HTTPS game link on both devices and hard-refresh with Ctrl+F5.
+
+WHAT'S NEW IN v42
+- Triple T has been redesigned with an animated rift-bat look, a new three-bat basic volley, and three reworked abilities: Riftstep Rally, Batline Breaker, and Moonbreaker Rally.
+- Distinct animated visual effects were added for all 18 player abilities across the six playable characters.
+- Triple T's neon bat projectiles retain their special appearance in multiplayer.
 
 NOTES
 - The host tab remains authoritative for the run; keep it open during play.
-- v39 improves player attacks, abilities, visual-effect delivery, input aim, party upgrade/health handling, and state back-pressure.
-- JavaScript syntax and archive integrity were checked, but a live two-device multiplayer session was not available in this environment.
+- JavaScript syntax and archive integrity have been checked. A live two-device multiplayer session was not available for testing here.

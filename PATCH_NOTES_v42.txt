@@ -1,0 +1,26 @@
+ZACH'S ULTIMATE BUFFET — v42
+TRIPLE T REMAKE + CHARACTER ABILITY VISUAL OVERHAUL
+
+TRIPLE T
+- Redesigned Triple T with a neon rift-bat showman look, varsity-style jacket, animated orbiting bats, and teal/purple/gold energy accents.
+- Reworked his standard attack into a three-bat volley with different speeds, damage weights, and glowing colors.
+- Replaced the three abilities with a distinct kit:
+  1. Riftstep Rally — a forward phase dash with brief invulnerability, afterimages, and three heavy returning bats.
+  2. Batline Breaker — clears bullets nearby and sends a nine-bat converging barrage toward the boss.
+  3. Moonbreaker Rally — empowers basic attacks for seven seconds and opens with a ring of bats.
+
+ABILITY VISUAL OVERHAUL
+- Added bespoke animated visual motifs and character palettes for all 18 abilities across the six playable characters: Zach, Mason Borg, Triple T, Naoya, Cartman, and Max.
+- Each fighter has a distinct visual language: food crescents/sparks, reactor geometry and hex armour, rift bats, lightning forks, comic impacts/cheese wedges, and prism-glass/laser effects.
+- Ability effects are stored in the game state so host-triggered and guest-triggered visuals can appear in multiplayer snapshots.
+- Added owner-aware neon bat styling for Triple T projectiles, including remote-player shots.
+
+FILES
+- Replace both index.html and game.html in the existing GitHub Pages repository.
+- Keep cartman.png and the music folder in the same directory.
+- Commit changes to main and wait for GitHub Pages to redeploy before hard-refreshing both devices.
+
+VALIDATION
+- JavaScript syntax check passed with Node.js.
+- ZIP archive integrity checked.
+- A live two-device session could not be tested in this environment; verify the abilities and multiplayer effects in a real co-op match after deployment.
