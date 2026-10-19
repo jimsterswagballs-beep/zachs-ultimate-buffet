@@ -1,0 +1,13 @@
+Zach's Ultimate Buffet — v37 Multiplayer Character Fix
+
+Changes
+- Fixed character selection sync by including the selected fighter in READY packets and validating character indices on the host.
+- Guest rendering preserves the guest's actual selected fighter rather than silently falling back to Zach when a character field is missing.
+- Host fighter identity is explicitly synchronized to the host avatar rendered on guest screens.
+- Multiplayer avatar models are drawn during play, upgrades, dialogue, downed screens, and spectating. Downed avatars remain visible with a faded appearance and DOWN label.
+- Retains v36 movement interpolation, multiplayer performance improvements, visual effects, and 10-second co-op upgrade voting.
+
+Validation
+- JavaScript syntax checked with Node.js.
+- ZIP integrity checked after packaging.
+- A true two-device multiplayer session could not be run in this environment; please test on the published HTTPS page.

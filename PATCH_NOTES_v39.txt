@@ -1,0 +1,20 @@
+Zach's Ultimate Buffet v39 — Max & Mason Ability Update
+
+NEW FIGHTER: MAX
+- Added Max, a sunglasses-wearing aura-based fighter with a custom cyan/purple sprite.
+- Passive Aura: pulses damage to nearby bosses and clears nearby bullets; Aura Overload increases radius and damage for 8 seconds.
+- Sunglass Laser: a piercing, aim-directed beam with custom cyan/purple/white effects and boss damage.
+- Aura Burst: an area burst that damages a nearby boss and clears projectiles.
+- Added Max to solo character selection and the multiplayer lobby; number keys 1–6 and arrow keys now cover all six fighters.
+
+MASON BORG
+- Normal 3-hit melee combo no longer reflects bullets back at enemies; it destroys nearby bullets instead.
+- Aegis Counter is the dedicated timed reflection ability. Removed the brief reflection effect from Titan Breaker.
+- Multiplayer guests use a per-player reflection timer for Aegis Counter rather than activating the host's global reflection timer.
+
+MULTIPLAYER
+- Host simulation processes Max's passive aura for remote Max players, so aura damage is authoritative and shared.
+- Max's laser and burst effects live in shared game state, so effects can be shown on connected devices.
+- Multiplayer character cards now fit all six fighters.
+
+Validation: JavaScript syntax and ZIP structure checked. A live two-device multiplayer session was not available in this environment, so please test character selection and Max's abilities after publishing.

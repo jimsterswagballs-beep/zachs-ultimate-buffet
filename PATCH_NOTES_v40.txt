@@ -1,0 +1,13 @@
+Zach’s Ultimate Buffet — v40 Patch Notes
+
+MASON BORG MELEE CHANGE
+- Mason Borg’s regular three-hit melee combo no longer removes enemy bullets.
+- His melee swings still deal damage to bosses and retain their combo/finisher effects.
+- Bullet reflection remains exclusive to Aegis Counter.
+- Separate active abilities that clear projectiles, such as Seismic Slam, are unchanged.
+
+INSTALLATION
+Replace both index.html and game.html in the existing GitHub Pages repository with these v40 files. Keep cartman.png and the music folder next to index.html, commit the changes, then hard-refresh both devices after Pages deploys.
+
+VALIDATION
+JavaScript syntax and archive integrity were checked. A live multiplayer session was not available for testing.

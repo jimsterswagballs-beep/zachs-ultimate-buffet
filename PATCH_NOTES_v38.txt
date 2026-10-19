@@ -1,0 +1,15 @@
+Zach's Ultimate Buffet — v38 Multiplayer Systems & Performance
+
+Changes
+- Guest basic attacks now use the selected fighter's real attack function, including Mason's melee swing, Triple T's triple return-bats, Naoya's fan, and Cartman's charged shot.
+- Remote movement and attack cooldowns respect shared upgrades and global boosts; projectile ownership is recorded for multiplayer effects and owner-based recovery.
+- Guests can activate unlocked shared upgrade skills using their configured keybinds. Character abilities use the native character kits with independent cooldowns; delayed special volleys preserve the remote player's identity.
+- Guest input carries a throttled, coarse aim position so manual aiming works over the network.
+- Host particle bursts and expanding rings are relayed as bounded visual events; guests have a lower particle budget to protect frame rate.
+- Lowered the queued-data threshold so the game is less likely to build up a backlog of stale snapshots.
+- Party starting perks are merged into the shared co-op build; shared heal/glass upgrades now update teammate health, and living teammates gain a heart when a boss is cleared.
+- Mason's reflection ability also reflects bullets that hit the remote Mason.
+
+Validation
+- JavaScript syntax check and ZIP integrity check performed.
+- A live two-device test is not available here; test on the published HTTPS page with two browsers. WebRTC reachability can still depend on the players' networks.
