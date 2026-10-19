@@ -684,7 +684,8 @@ const MP_PEER_OPTIONS={
 const MP={active:false,role:null,peer:null,roomId:'',invite:'',conn:null,connections:new Map(),players:{},
   lobbyPlayers:[],otherPlayers:[],status:'Choose a fighter, then create a room or open a friend invite.',
   localChar:0,hostChar:0,ready:false,started:false,lastStateAt:0,lastInputAt:0,musicSync:null,fileWarning:false,
-  name:'Player',hostName:'Host',localDown:false,waiting:false,connectionFailed:false,connectingAt:0,lastRxAt:0,netLag:false,wipeTimer:0};
+  name:'Player',hostName:'Host',localDown:false,waiting:false,connectionFailed:false,connectingAt:0,lastRxAt:0,netLag:false,wipeTimer:0,
+  stateSeq:0,lastGuestStateSeq:0,lastInputSignature:'',snapshotSkips:0,lastSnapshotBytes:0};
 function mpCleanName(value){return String(value||'').replace(/[\u0000-\u001f\u007f]/g,'').replace(/\s+/g,' ').trim().slice(0,16)||'Player'}
 function mpReadName(){try{return mpCleanName(localStorage.getItem('zub-mp-name')||'Player')}catch(e){return 'Player'}}
 MP.name=mpReadName();MP.hostName=MP.name;
@@ -704,10 +705,10 @@ function mpBroadcastLobby(){
 }
 function mpSetStatus(t){MP.status=t;}
 function mpCreate(){
-  if(typeof Peer==='undefined'){mpSetStatus('Multiplayer library could not load. Check your internet connection and reload.');return}
-  MP.active=true;MP.role='host';MP.started=false;MP.roomFull=false;MP.ready=true;MP.localDown=false;MP.waiting=false;MP.connectionFailed=false;MP.connectingAt=tm;MP.lastRxAt=tm;MP.netLag=false;MP.wipeTimer=0;MP.localChar=SEL;MP.hostChar=SEL;MP.hostName=MP.name;MP.players={};MP.connections=new Map();MP.fileWarning=location.protocol==='file:'||['localhost','127.0.0.1','0.0.0.0'].includes(location.hostname);
+  if(typeof Peer==='undefined'){MP.connectionFailed=true;mpSetStatus('Multiplayer library could not load. Check your internet connection and reload.');return}
+  MP.active=true;MP.role='host';MP.started=false;MP.roomFull=false;MP.ready=true;MP.localDown=false;MP.waiting=false;MP.connectionFailed=false;MP.connectingAt=tm;MP.lastRxAt=tm;MP.netLag=false;MP.wipeTimer=0;MP.localChar=SEL;MP.hostChar=SEL;MP.hostName=MP.name;MP.players={};MP.connections=new Map();MP.stateSeq=0;MP.lastGuestStateSeq=0;MP.lastInputSignature='';MP.snapshotSkips=0;MP.fileWarning=location.protocol==='file:'||['localhost','127.0.0.1','0.0.0.0'].includes(location.hostname);
   mpSetStatus('Connecting to the room service…');
-  try{MP.peer=new Peer(undefined,MP_PEER_OPTIONS);}catch(e){mpSetStatus('Could not create a room: '+e.message);return}
+  try{MP.peer=new Peer(undefined,MP_PEER_OPTIONS);}catch(e){MP.connectionFailed=true;mpSetStatus('Could not create a room: '+e.message);return}
   MP.peer.on('open',id=>{
     MP.roomId=id;const u=new URL(location.href);u.searchParams.set('mp',id);MP.invite=u.toString();
     mpSetStatus(MP.fileWarning?'Room ready, but this local address cannot be used by friends. Publish the game on HTTPS first.':'Room ready. Pick characters and have friends join using your invite link.');
@@ -730,10 +731,10 @@ function mpCreate(){
   MP.peer.on('error',e=>{MP.connectionFailed=true;mpSetStatus('Room connection error: '+(e&&e.type||'network error')+'. Check your internet connection and try creating the room again.');});
 }
 function mpJoin(roomId){
-  if(typeof Peer==='undefined'){S='mplobby';MP.status='Multiplayer library could not load. Check your internet connection and reload.';return}
-  MP.active=true;MP.role='guest';MP.started=false;MP.roomFull=false;MP.localDown=false;MP.waiting=false;MP.connectionFailed=false;MP.connectingAt=tm;MP.lastRxAt=tm;MP.netLag=false;MP.roomId=String(roomId||'');MP.invite=location.href;MP.localChar=SEL;MP.ready=false;MP.hostChar=0;MP.hostName='Host';MP.lobbyPlayers=[];MP.otherPlayers=[];MP.fileWarning=location.protocol==='file:'||['localhost','127.0.0.1','0.0.0.0'].includes(location.hostname);
+  if(typeof Peer==='undefined'){S='mplobby';MP.active=true;MP.role='guest';MP.roomId=String(roomId||'');MP.localChar=SEL;MP.connectingAt=tm;MP.connectionFailed=true;MP.status='Multiplayer library could not load. Check your internet connection and reload.';return}
+  MP.active=true;MP.role='guest';MP.started=false;MP.roomFull=false;MP.localDown=false;MP.waiting=false;MP.connectionFailed=false;MP.connectingAt=tm;MP.lastRxAt=tm;MP.netLag=false;MP.roomId=String(roomId||'');MP.invite=location.href;MP.localChar=SEL;MP.ready=false;MP.lastGuestStateSeq=0;MP.lastInputSignature='';MP.hostChar=0;MP.hostName='Host';MP.lobbyPlayers=[];MP.otherPlayers=[];MP.fileWarning=location.protocol==='file:'||['localhost','127.0.0.1','0.0.0.0'].includes(location.hostname);
   MP.status='Connecting to your friend…';S='mplobby';
-  try{MP.peer=new Peer(undefined,MP_PEER_OPTIONS);}catch(e){MP.status='Could not connect: '+e.message;return}
+  try{MP.peer=new Peer(undefined,MP_PEER_OPTIONS);}catch(e){MP.connectionFailed=true;MP.status='Could not connect: '+e.message;return}
   MP.peer.on('open',()=>{
     MP.connectingAt=tm;MP.conn=MP.peer.connect(roomId,{reliable:true,metadata:{char:SEL,name:MP.name}});
     MP.conn.on('open',()=>{MP.connectionFailed=false;MP.connectingAt=tm;MP.lastRxAt=tm;MP.netLag=false;MP.status='Connected. Choose your fighter and press READY.';mpSend(MP.conn,{type:'setName',name:MP.name});mpSend(MP.conn,{type:'select',char:SEL});});
@@ -757,7 +758,7 @@ function mpHostMessage(conn,msg){
   }else if(msg.type==='input'){
     pl.input={left:!!msg.left,right:!!msg.right,up:!!msg.up,down:!!msg.down,fire:!!msg.fire,eat:!!msg.eat,autoFire:!!msg.autoFire};
   }else if(msg.type==='ability'){
-    const j=Number(msg.index);if(Number.isInteger(j)&&j>=0&&j<3)pl.abilityQueue.push(j);
+    const j=Number(msg.index);if(Number.isInteger(j)&&j>=0&&j<3&&pl.abilityQueue.length<3)pl.abilityQueue.push(j);
   }else if(msg.type==='advance'&&S==='dlg')next();
   else if(msg.type==='choose'&&S==='pick')choose(Math.max(0,Math.min(2,Number(msg.index)||0)));
   else if(msg.type==='pauseToggle'&&MP.started){if(S==='play')S='pause';else if(S==='pause')S='play';}
@@ -776,7 +777,7 @@ function mpGuestMessage(msg){
   }else if(msg.type==='roomClosed'){
     MP.started=false;MP.connectionFailed=true;MP.localDown=false;MP.waiting=false;g=null;MP.status='The host closed the room. Ask them to create a new room if you want to play again.';S='mplobby';
   }else if(msg.type==='start'){
-    MP.localChar=SEL;MP.hostChar=msg.hostChar||0;MP.started=true;SEL=MP.localChar;
+    MP.localChar=SEL;MP.hostChar=msg.hostChar||0;MP.started=true;MP.lastGuestStateSeq=0;SEL=MP.localChar;
     S='mpBoot';g=null;newRun(Number(msg.index)||0);MP.status='Boss rush in progress';
   }else if(msg.type==='state'){
     if(!MP.started){MP.started=true;MP.localChar=MP.localChar??SEL;}
@@ -805,7 +806,7 @@ function mpStartHost(){
   if(MP.role!=='host')return;
   const players=Object.values(MP.players);if(!players.length){mpSetStatus('At least one friend must join before the co-op run can start.');return}
   if(players.some(p=>!p.ready)){mpSetStatus('Everyone needs to choose a fighter and press READY first.');return}
-  MP.hostChar=SEL;MP.started=true;MP.localDown=false;MP.waiting=false;MP.wipeTimer=0;MP.netLag=false;mpSetStatus('Boss rush in progress');
+  MP.hostChar=SEL;MP.started=true;MP.localDown=false;MP.waiting=false;MP.wipeTimer=0;MP.netLag=false;MP.lastStateAt=0;MP.snapshotSkips=0;mpSetStatus('Boss rush in progress');
   for(const c of MP.connections.values())mpSend(c,{type:'start',hostChar:SEL,index:0});
   S='mpBoot';newRun(0);if(g){g.mpCoop=1;g.mpBossHealth=mpBossHpScale();}
   mpBroadcastLobby();
@@ -869,29 +870,96 @@ function mpTick(){
   if(MP.role==='guest'&&MP.started&&MP.conn){
     if(!MP.connectionFailed&&!MP.conn.open&&tm-MP.connectingAt>15){MP.connectionFailed=true;MP.status='Connection timed out. Check the host and internet connection, then use RETRY CONNECTION.'}
     if(MP.conn.open&&tm-MP.lastRxAt>10&&!MP.netLag){MP.netLag=true;MP.status='The room connection looks stalled. Check that the host still has the game open.'}
-    if(!MP.localDown&&MP.conn.open&&tm-MP.lastInputAt>.05){MP.lastInputAt=tm;mpSend(MP.conn,{type:'input',left:!!(K[KB.left]||K.arrowleft),right:!!(K[KB.right]||K.arrowright),up:!!(K[KB.up]||K.arrowup),down:!!(K[KB.down]||K.arrowdown),fire:!!(M.d||M.t||K.j),eat:!!(K[KB.eat]||K.shift||K.rm),autoFire:!!SET.af});}
+    if(!MP.localDown&&MP.conn.open){
+      const input={left:!!(K[KB.left]||K.arrowleft),right:!!(K[KB.right]||K.arrowright),up:!!(K[KB.up]||K.arrowup),down:!!(K[KB.down]||K.arrowdown),fire:!!(M.d||K.j),eat:!!(K[KB.eat]||K.shift||K.rm),autoFire:!!SET.af};
+      const sig=[input.left,input.right,input.up,input.down,input.fire,input.eat,input.autoFire].map(Number).join('');
+      // Send immediately when controls change, with a 10 Hz heartbeat while held/idle.
+      if(sig!==MP.lastInputSignature||tm-MP.lastInputAt>=.1){MP.lastInputAt=tm;MP.lastInputSignature=sig;mpSend(MP.conn,{type:'input',...input});}
+    }
     if(MP.musicSync&&mA&&mCur===MP.musicSync.track&&!mA.seeking){const diff=(Number(MP.musicSync.time)||0)-mA.currentTime;if(Math.abs(diff)>1.2)try{mA.currentTime=Math.max(0,Number(MP.musicSync.time)||0)}catch(e){}}
   }else if(MP.role==='guest'&&MP.active&&!MP.started&&MP.peer&&!MP.connectionFailed&&tm-MP.connectingAt>15&&(!MP.conn||!MP.conn.open)){
     MP.connectionFailed=true;MP.status='Connection timed out. Check the host and your internet connection, then click RETRY CONNECTION.';
-  }else if(MP.role==='host'&&MP.started&&tm-MP.lastStateAt>.075){
-    MP.lastStateAt=tm;let copy=null;try{copy=JSON.parse(JSON.stringify(g,(k,v)=>k==='dl'?[]:(typeof v==='function'?undefined:v)))}catch(e){console.warn('Snapshot failed',e)}
-    if(copy){const host={id:'host',name:MP.name,char:SEL,ready:true,isHost:true,x:g&&g.p?g.p.x:400,y:g&&g.p?g.p.y:500,hp:MP.localDown?0:(g&&g.p?g.p.hp:1),maxHp:g&&g.p?g.p.mh:3,inv:g&&g.p?g.p.inv:0,down:MP.localDown?1:0,boost:0,abilityCd:[0,0,0]};const packet={type:'state',screen:S,game:copy,hostChar:SEL,players:[host,...mpRoster().map(p=>{const q=MP.players[p.id]||{};return {...p,x:q.x||400,y:q.y||500,hp:q.hp??3,maxHp:q.maxHp??3,inv:q.inv||0,down:q.down||0,boost:q.boost||0,abilityCd:Array.isArray(q.abilityCd)?q.abilityCd.slice():[0,0,0]}})],music:{track:mCur,time:mA&&Number.isFinite(mA.currentTime)?mA.currentTime:0,paused:!!(mA&&mA.paused)}};
-      for(const c of MP.connections.values()){if(!c||!c.open)continue;const queued=c.dataChannel&&Number(c.dataChannel.bufferedAmount||0)||0;if(queued>300000)continue;mpSend(c,packet)}
+  }else if(MP.role==='host'&&MP.started&&tm-(MP.lastStateAt||0)>=.1&&g){
+    MP.lastStateAt=tm;
+    const recipients=[...MP.connections.values()].filter(c=>c&&c.open);
+    // Do not JSON-clone the live simulation if every guest has disconnected.
+    if(!recipients.length)return;
+    let copy=null;
+    try{copy=JSON.parse(JSON.stringify(g,(k,v)=>k==='dl'?[]:(typeof v==='function'?undefined:v)))}catch(e){console.warn('Snapshot failed',e)}
+    if(copy){
+      const host={id:'host',name:MP.name,char:SEL,ready:true,isHost:true,x:g&&g.p?g.p.x:400,y:g&&g.p?g.p.y:500,hp:MP.localDown?0:(g&&g.p?g.p.hp:1),maxHp:g&&g.p?g.p.mh:3,inv:g&&g.p?g.p.inv:0,down:MP.localDown?1:0,boost:0,abilityCd:[0,0,0]};
+      const packet={type:'state',seq:++MP.stateSeq,screen:S,game:copy,hostChar:SEL,players:[host,...mpRoster().map(p=>{const q=MP.players[p.id]||{};return {...p,x:q.x||400,y:q.y||500,hp:q.hp??3,maxHp:q.maxHp??3,inv:q.inv||0,down:q.down||0,boost:q.boost||0,abilityCd:Array.isArray(q.abilityCd)?q.abilityCd.slice():[0,0,0]}})],music:{track:mCur,time:mA&&Number.isFinite(mA.currentTime)?mA.currentTime:0,paused:!!(mA&&mA.paused)}};
+      let skipped=0;
+      for(const c of recipients){
+        // Snapshots are full state (not deltas), so dropping a congested frame is safe.
+        const queued=c.dataChannel&&Number(c.dataChannel.bufferedAmount||0)||0;
+        if(queued>160000){skipped++;continue;}
+        mpSend(c,packet);
+      }
+      MP.snapshotSkips=(MP.snapshotSkips||0)+skipped;
     }
   }
 }
 function mpLobbyScr(){
-  const t=tm;bg('#9b5de5');X.fillStyle='#0008';X.fillRect(0,0,W,H);T('MULTIPLAYER',400,34,32,'#f0b94a');T('CO-OP BOSS RUSH  /  AUTO-SCALED HP · BONUS ×'+Number(MP.settings.bossHp||1).toFixed(2),400,64,12,'#9fe8ff');
-  CHS.forEach((c,i)=>{const x=18+i*155,selected=i===SEL,hover=M.x>x&&M.x<x+145&&M.y>98&&M.y<318,y0=99+(selected?-4:hover?-2:0);X.fillStyle=selected?'#2a1b55':'#15102a';X.strokeStyle=selected?'#f0b94a':hover?'#9fe8ff':'#45365f';X.lineWidth=selected?3:1.5;X.beginPath();X.roundRect(x,y0,145,218,12);X.fill();X.stroke();spr(CI[i],x+72,y0+48,selected?54:46);T(c[0],x+72,y0+91,14,selected?'#f0b94a':'#f1e8d6');T(c[1],x+72,y0+112,10,'#9fe8ff');const b=CHB[i];T('SPD '+b[1].toFixed(2)+'   DMG '+b[3].toFixed(2),x+72,y0+139,10,'#d9d0e8');T('Ability kit',x+72,y0+162,10,'#f0b94a');T(CAB[i][0][0],x+72,y0+180,9,'#c9bfe0');T(selected?'SELECTED':'CLICK TO PICK',x+72,y0+202,9,selected?'#7dffb0':'#9b90af');});
-  T('Choose a fighter above. Move: WASD / arrows · auto-fire · abilities: 1 / 2 / 3.',400,337,12,'#c9bfe0');X.fillStyle='#201536';X.strokeStyle='#f0b94a';X.lineWidth=1.5;X.beginPath();X.roundRect(185,346,255,29,14);X.fill();X.stroke();T('EDIT USERNAME: '+MP.name,312,361,12,'#ffe27a');X.fillStyle='#201536';X.strokeStyle='#9fe8ff';X.beginPath();X.roundRect(454,346,190,29,14);X.fill();X.stroke();T('CO-OP SETTINGS',549,361,12,'#9fe8ff');
-  const button=(label,x,y,w,h,hot=true)=>{const over=M.x>=x&&M.x<=x+w&&M.y>=y&&M.y<=y+h;X.fillStyle=over&&hot?'#f0b94a':'#201536';X.strokeStyle=hot?'#f0b94a':'#4d3e65';X.lineWidth=2;X.beginPath();X.roundRect(x,y,w,h,16);X.fill();X.stroke();T(label,x+w/2,y+h/2,14,over&&hot?'#10091e':'#f1e8d6');};
-  if(!MP.active||!MP.role){button('CREATE ROOM',188,386,190,42);button('BACK',412,386,190,42);T('Your friend will use the invite link generated by the host.',400,446,12,'#c9bfe0');T('Internet multiplayer requires the game to be hosted on an HTTPS website.',400,466,11,'#9b90af');}
-  else if(MP.role==='host'){
-    T('ROOM: '+(MP.roomId||'CONNECTING…'),400,374,14,'#7dffb0');T(MP.status,400,397,10,MP.fileWarning?'#ff9d7a':'#c9bfe0');
-    const link=MP.invite||'Waiting for room ID…';T(link.length>78?link.slice(0,75)+'…':link,400,417,9,'#9fe8ff');button('COPY INVITE LINK',150,435,210,39,!!MP.invite);const players=mpRoster(),ready=players.length>0&&players.every(p=>p.ready);button(ready?'START CO-OP RUN':'WAITING FOR READY',390,435,260,39,ready);if(!players.length)T('Your room is open — send the invite link to a friend.',400,492,11,'#c9bfe0');else{players.slice(0,4).forEach((p,i)=>{const x=18+i*194;X.fillStyle=p.ready?'#12352c':'#201536';X.strokeStyle=p.ready?'#7dffb0':'#79649e';X.lineWidth=1.5;X.beginPath();X.roundRect(x,478,180,28,9);X.fill();X.stroke();T(p.name.slice(0,13)+(p.ready?'  ✓':'  …'),x+90,492,11,p.ready?'#baffd6':'#e1d7f0')});if(players.length>4)T('+'+(players.length-4)+' more',782,492,10,'#c9bfe0','right')}button('LEAVE ROOM',300,521,200,34);}
-  else{
-    const readyCount=MP.lobbyPlayers.filter(p=>p.ready).length;
-    T(MP.status,400,378,12,'#c9bfe0');T('Host: '+MP.hostName+' ('+CHS[MP.hostChar]?.[0]+')   ·   '+MP.lobbyPlayers.length+' guest(s) connected   ·   '+readyCount+' ready',400,402,11,'#9fe8ff');button(MP.connectionFailed?'RETRY CONNECTION':MP.conn&&MP.conn.open?(MP.ready?'READY ✓ (CLICK TO UNREADY)':'READY'):'CONNECTING…',188,435,190,39,MP.connectionFailed||!!(MP.conn&&MP.conn.open));button('LEAVE ROOM',412,435,190,39);const listed=MP.lobbyPlayers.slice(0,4);if(listed.length){listed.forEach((p,i)=>{const x=18+i*194;X.fillStyle=p.ready?'#12352c':'#201536';X.strokeStyle=p.ready?'#7dffb0':'#79649e';X.lineWidth=1.5;X.beginPath();X.roundRect(x,478,180,28,9);X.fill();X.stroke();T(p.name.slice(0,13)+(p.ready?'  ✓':'  …'),x+90,492,11,p.ready?'#baffd6':'#e1d7f0')})}else T('Connected to the host. Waiting for players to join…',400,492,11,'#b9aecb');T('The host starts once everyone is ready.',400,516,11,'#b9aecb');if(MP.fileWarning)T('This page is opened from a local file. Friends need a hosted HTTPS link.',400,536,10,'#ff9d7a');}
+  const pulse=.5+.5*Math.sin(tm*2.1),accent=['#ffb84d','#7dffb0','#b57bff','#2ec4b6','#ff7eb6'];
+  // Animated midnight backdrop with restrained stars and buffet-gold guide lines.
+  const back=X.createLinearGradient(0,0,W,H);back.addColorStop(0,'#09091b');back.addColorStop(.52,'#181035');back.addColorStop(1,'#080a19');X.fillStyle=back;X.fillRect(0,0,W,H);
+  const glow=X.createRadialGradient(400,150,20,400,150,430);glow.addColorStop(0,'#7b2cff24');glow.addColorStop(1,'#7b2cff00');X.fillStyle=glow;X.fillRect(0,0,W,H);
+  for(let i=0;i<34;i++){const x=(i*97+Math.sin(tm*.25+i)*18)%W,y=(i*53+Math.cos(tm*.2+i)*15)%H;X.globalAlpha=.15+.3*(.5+.5*Math.sin(tm*1.7+i));X.fillStyle=i%4===0?'#f0b94a':'#9fe8ff';X.fillRect(x,y,1.5,1.5)}X.globalAlpha=1;
+  X.strokeStyle='#8d6bba20';X.lineWidth=1;for(let x=20;x<W;x+=40){X.beginPath();X.moveTo(x,87);X.lineTo(x,H);X.stroke()}
+  // Title bar and connection-state badge.
+  X.fillStyle='#100c25eF';X.strokeStyle='#644d86';X.lineWidth=1.4;X.beginPath();X.roundRect(14,12,772,70,16);X.fill();X.stroke();
+  X.fillStyle='#f0b94a';X.beginPath();X.roundRect(27,23,5,44,2);X.fill();
+  T('THE BUFFET',43,32,21,'#f0b94a','left');T('ONLINE CO-OP',44,56,10,'#9fe8ff','left');
+  T('PARTY LOBBY',400,30,23,'#f6f0ff');T('PICK A FIGHTER  ·  SYNC UP  ·  TAKE DOWN THE BUFFET',400,56,9,'#b9aecb');
+  const connected=!!(MP.active&&MP.role&&(MP.role==='host'?!!MP.roomId:!!(MP.conn&&MP.conn.open)));
+  const pillText=connected?(MP.role==='host'?'HOST ONLINE':'CONNECTED'):(MP.connectionFailed?'CONNECTION ISSUE':'NOT CONNECTED');
+  X.fillStyle=connected?'#12352c':'#2b1a32';X.strokeStyle=connected?'#7dffb0':MP.connectionFailed?'#ff7b91':'#79649e';X.lineWidth=1.2;X.beginPath();X.roundRect(642,25,128,29,14);X.fill();X.stroke();
+  ball(655,39.5,3.5,connected?'#baffd6':'#ff9dba',connected?'#36ba83':'#a8325c');T(pillText,706,40,9,connected?'#baffd6':'#ffd0df');
+  // Five fighter cards: selected card gets a brighter portrait halo and clearer stats.
+  CHS.forEach((c,i)=>{
+    const x=18+i*155,y=98,w=145,h=220,selected=i===SEL,hover=M.x>x&&M.x<x+w&&M.y>98&&M.y<318,col=accent[i];
+    const card=X.createLinearGradient(x,y,x+w,y+h);card.addColorStop(0,selected?'#30204f':'#17132d');card.addColorStop(1,selected?'#18112f':'#0e1022');
+    X.fillStyle=card;X.strokeStyle=selected?'#f0b94a':hover?'#9fe8ff':'#493962';X.lineWidth=selected?2.7:1.2;X.beginPath();X.roundRect(x,y+(selected?-2:0),w,h,12);X.fill();X.stroke();
+    X.fillStyle=col;X.globalAlpha=selected?.95:.48;X.beginPath();X.roundRect(x+10,y+10,w-20,3,2);X.fill();X.globalAlpha=1;
+    T('FIGHTER 0'+(i+1),x+13,y+25,8,selected?'#ffe27a':'#9284b1','left');
+    const halo=X.createRadialGradient(x+72,y+68,3,x+72,y+68,49);halo.addColorStop(0,col+(selected?'55':'30'));halo.addColorStop(1,col+'00');X.fillStyle=halo;X.beginPath();X.arc(x+72,y+68,49,0,PI2);X.fill();
+    spr(CI[i],x+72,y+68,selected?47:42);
+    T(c[0],x+72,y+119,13,selected?'#ffe27a':'#f1e8d6');T(c[1],x+72,y+138,8,'#bfb1d6');
+    X.strokeStyle='#ffffff18';X.beginPath();X.moveTo(x+14,y+151);X.lineTo(x+w-14,y+151);X.stroke();
+    const stat=CHB[i];T('SPD '+stat[1].toFixed(2)+'   DMG '+stat[3].toFixed(2),x+72,y+166,8,'#cbd6ef');
+    T('SIGNATURE MOVE',x+72,y+184,7,col);T(String(CAB[i][0][0]||'Signature move').slice(0,19),x+72,y+197,8,'#e8dff6');
+    X.fillStyle=selected?'#f0b94a':hover?'#28415b':'#211937';X.beginPath();X.roundRect(x+17,y+204,w-34,11,5);X.fill();T(selected?'SELECTED':'CLICK TO SELECT',x+72,y+210,7,selected?'#160d29':'#c9bfe0');
+  });
+  T('CHOOSE YOUR FIGHTER  ·  KEYS 1–5 OR ← → ALSO WORK',400,329,10,'#e3d8f2');
+  // Quick actions are positioned to preserve the existing mouse/keyboard hit targets.
+  const quick=(label,x,y,w,color)=>{const hot=M.x>=x&&M.x<=x+w&&M.y>=y&&M.y<=y+29;X.fillStyle=hot?'#34234e':'#15112b';X.strokeStyle=hot?color:'#56416f';X.lineWidth=1.2;X.beginPath();X.roundRect(x,y,w,29,14);X.fill();X.stroke();T(label,x+w/2,y+15,10,hot?'#fff1bd':color)};
+  quick('EDIT NAME  ·  '+MP.name.slice(0,12),185,346,255,'#ffe27a');quick('ROOM SETTINGS',454,346,190,'#9fe8ff');
+  // Shared lower panel and prominent primary actions.
+  X.fillStyle='#0c0a1deF';X.strokeStyle='#594272';X.lineWidth=1.2;X.beginPath();X.roundRect(14,379,772,174,15);X.fill();X.stroke();
+  const button=(label,x,y,w,h,hot=true,kind='primary')=>{const over=M.x>=x&&M.x<=x+w&&M.y>=y&&M.y<=y+h;const on=hot&&over;X.fillStyle=on?'#ffe27a':kind==='secondary'?'#1b1630':hot?'#241a3c':'#181327';X.strokeStyle=hot?(kind==='secondary'?'#9fe8ff':'#f0b94a'):'#4b3c60';X.lineWidth=on?2.2:1.2;X.beginPath();X.roundRect(x,y,w,h,12);X.fill();X.stroke();T(label,x+w/2,y+h/2,11,on?'#160d29':hot?'#f5eefc':'#776b89');};
+  const drawMember=(x,y,p,isHost=false)=>{const ch=Math.max(0,Math.min(4,Number(p.char)||0)),ready=!!p.ready;X.fillStyle=ready?'#102c2b':'#171329';X.strokeStyle=ready?'#377b65':'#57436e';X.lineWidth=1;X.beginPath();X.roundRect(x,y,180,28,8);X.fill();X.stroke();spr(CI[ch],x+15,y+14,13);T(isHost?'HOST':p.name.slice(0,9),x+61,y+14,8,isHost?'#ffe27a':'#efe7fa');T(isHost?CHS[ch][0]:CHS[ch][0].slice(0,8),x+123,y+14,7,'#9fe8ff');T(ready?'✓':'…',x+166,y+14,12,ready?'#7dffb0':'#b9aecb');};
+  if(!MP.active||!MP.role){
+    button(MP.connectionFailed?'TRY CREATE ROOM':'CREATE ROOM',188,386,190,42,true);button('BACK',412,386,190,42,true,'secondary');
+    T('A hosted HTTPS link is required for friends on other computers.',400,454,10,'#9fe8ff');T('Room settings can be tuned before you start the run.',400,473,9,'#a99abc');if(MP.connectionFailed)T(String(MP.status||'').slice(0,95),400,499,9,'#ff9dba');
+  }else if(MP.role==='host'){
+    const guests=mpRoster(),partySize=guests.length+1,ready=guests.length>0&&guests.every(p=>p.ready),canStart=ready&&partySize<=Number(MP.settings.maxPlayers||4);
+    T('ROOM  '+(MP.roomId?MP.roomId.slice(0,20):'CREATING…'),30,392,11,'#7dffb0','left');T(partySize+' / '+Number(MP.settings.maxPlayers||4)+' PLAYERS',770,392,9,'#ffe27a','right');
+    const st=String(MP.status||'Room is ready. Share the invite link.');T(st.length>100?st.slice(0,97)+'…':st,400,411,9,MP.fileWarning?'#ff9d7a':'#c9bfe0');
+    const link=MP.invite||'Waiting for room ID…';T(link.length>100?link.slice(0,97)+'…':link,400,426,8,'#9fe8ff');
+    button('COPY INVITE LINK',150,435,210,39,!!MP.invite);button(MP.connectionFailed?'RECREATE ROOM':canStart?'START CO-OP RUN':'WAITING FOR READY',390,435,260,39,canStart||MP.connectionFailed);
+    drawMember(18,480,{name:MP.name,char:SEL,ready:true},true);guests.slice(0,3).forEach((p,i)=>drawMember(212+i*194,480,p,false));
+    if(!guests.length)T('Your room is open — share the invite link with a friend.',400,516,9,'#c9bfe0');else if(!ready)T('Every guest must press READY before the host can start.',400,516,9,'#c9bfe0');
+    button('LEAVE ROOM',300,521,200,34,true,'secondary');
+  }else{
+    const guests=MP.lobbyPlayers||[],partySize=guests.length+1,readyCount=guests.filter(p=>p.ready).length;
+    const st=String(MP.status||'Connecting to host…');T(st.length>100?st.slice(0,97)+'…':st,400,392,9,MP.connectionFailed?'#ff9dba':'#c9bfe0');
+    T('HOST  '+MP.hostName+'  ·  '+CHS[Math.max(0,Math.min(4,Number(MP.hostChar)||0))][0]+'     PARTY  '+partySize+' / '+Number(MP.settings.maxPlayers||4),400,411,9,'#9fe8ff');
+    button(MP.connectionFailed?'RETRY CONNECTION':MP.conn&&MP.conn.open?(MP.ready?'READY ✓  ·  CLICK TO UNREADY':'READY UP'):'CONNECTING…',188,435,190,39,MP.connectionFailed||!!(MP.conn&&MP.conn.open));button('LEAVE ROOM',412,435,190,39,true,'secondary');
+    drawMember(18,480,{name:MP.hostName,char:MP.hostChar,ready:true},true);guests.slice(0,3).forEach((p,i)=>drawMember(212+i*194,480,p,false));
+    if(guests.length<1)T('You are in the room. Waiting for other players…',400,516,9,'#b9aecb');else T(readyCount+' guest(s) ready · the host starts when everyone is ready.',400,516,9,'#c9bfe0');
+    if(MP.fileWarning)T('Local file opened: friends need the public HTTPS game link.',400,537,8,'#ff9d7a');
+  }
 }
 function drawMPOverlay(){
   if(!MP.active||!MP.started||!g||!['play','dlg','pause','pick','win','over'].includes(S))return;
@@ -919,7 +987,7 @@ function press(k){audioInit();if(k=='c'||k=='enter')sfx('click');const go=k=='c'
    if(k==='c'){
      const ci=Math.floor((M.x-18)/155);if(M.y>98&&M.y<318&&ci>=0&&ci<5&&M.x<18+ci*155+145){SEL=ci;SET.ch=SEL;saveS();if(MP.role==='guest'){MP.localChar=SEL;MP.ready=false;mpSend(MP.conn,{type:'select',char:SEL});mpSend(MP.conn,{type:'ready',ready:false})}else if(MP.role==='host'){MP.hostChar=SEL;mpBroadcastLobby()}return}
      if(!MP.active||!MP.role){if(M.y>382&&M.y<433){if(M.x<400)mpCreate();else S='title';return}if(M.y>480){S='title';return}}
-     else if(MP.role==='host'){if(M.y>432&&M.y<478){if(M.x<375)mpCopyInvite();else mpStartHost();return}if(M.y>515){mpLeave(true);return}}
+     else if(MP.role==='host'){if(M.y>432&&M.y<478){if(M.x<375)mpCopyInvite();else if(MP.connectionFailed){mpLeave(false);mpCreate()}else mpStartHost();return}if(M.y>515){mpLeave(true);return}}
      else if(MP.role==='guest'){if(M.y>432&&M.y<478){if(M.x<400){if(MP.connectionFailed||!MP.conn||!MP.conn.open){mpRetryJoin();return}MP.ready=!MP.ready;mpSend(MP.conn,{type:'ready',ready:MP.ready});MP.status=MP.ready?'Ready. Waiting for the host to start.':'Not ready yet.';}else mpLeave(true);return}}
    }
    if('12345'.includes(k)&&k.length===1){SEL=+k-1;SET.ch=SEL;saveS();if(MP.role==='guest'){MP.localChar=SEL;MP.ready=false;mpSend(MP.conn,{type:'select',char:SEL});mpSend(MP.conn,{type:'ready',ready:false})}else if(MP.role==='host')mpBroadcastLobby()}
@@ -1411,6 +1479,7 @@ let SEEN=0;const mpInviteId=new URLSearchParams(location.search).get('mp');if(mp
 
 // ---------- v34: boss health rebalance, dynamic co-op scaling, telegraphs, hitboxes and local admin tools ----------
 LOG.unshift(['v34 (latest)','All boss base HP +45%; co-op HP automatically scales by player count; The Hollow King nerfed; two extra unique attacks for each of the first six bosses; configurable pre-attack warnings and hitbox overlays; local admin cheat panel.']);
+LOG.unshift(['v35 (latest)','Remade the multiplayer party lobby, added room-recovery controls, reduced idle input traffic, throttled full-state snapshots, ignored stale snapshots, and skip-sent snapshots when a guest connection is congested.']);
 // All bosses receive a 45% health increase before order/cycle multipliers are applied.
 // This changes the game data itself, so the HUD and boss logic use the same upgraded values.
 B.forEach(bossData=>{bossData[1]=Math.round(bossData[1]*1.45)});

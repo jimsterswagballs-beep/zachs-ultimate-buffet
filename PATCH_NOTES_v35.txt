@@ -1,0 +1,19 @@
+ZACH'S ULTIMATE BUFFET — v35
+
+MULTIPLAYER LOBBY REMAKE
+- Rebuilt the lobby visual layout with a new party header, animated night-sky background, clearer fighter cards, stronger selected-fighter feedback, and a compact party roster that shows the host and guests.
+- Kept the existing mouse and keyboard control zones intact for fighter selection, username editing, room settings, readying up, copying invites, starting, and leaving.
+- Host and guest views now communicate room/connection status and party size more clearly. Connection setup failures expose retry/recreate paths instead of leaving the player stuck on a disabled screen.
+
+MULTIPLAYER PERFORMANCE AND RELIABILITY
+- Guest input packets send immediately when controls change, with a 10 Hz heartbeat instead of sending identical input at 20 Hz.
+- Fixed touch-mode multiplayer firing so a prior touch does not get treated as a permanently held fire input.
+- Full host snapshots are sent at 10 Hz rather than roughly 13 Hz, and the host skips expensive snapshot cloning when no guest connection is open.
+- State snapshots carry sequence numbers so stale/repeated snapshots are ignored.
+- Full-state snapshots are skipped for peers whose data-channel send buffer is already congested; the next snapshot restores the latest state because snapshots are not deltas.
+- Remote ability request queues are bounded to prevent unlimited queuing from repeated requests.
+
+NOTES
+- Internet co-op still requires the game to be hosted on an HTTPS site and the host to keep the game tab open.
+- PeerJS direct WebRTC connections may fail on restrictive networks; a TURN relay would require a configured relay service.
+- Syntax checks were run for both HTML game files. Real sessions across separate computers were not available in this environment, so network behavior still needs live testing.

@@ -1,4 +1,4 @@
-ZACH'S ULTIMATE BUFFET — v34
+ZACH'S ULTIMATE BUFFET — v35
 
 WHAT'S NEW IN v34
 - Cartman uses the supplied picture as an in-game sprite. Keep cartman.png in the same repository folder as index.html and game.html.
@@ -13,14 +13,14 @@ FILES
 - game.html: game.
 - cartman.png: transparent Cartman image based on the supplied picture.
 - music/: game soundtrack. Keep the folder beside both HTML files.
-- PATCH_NOTES_v33.txt and PATCH_NOTES_v34.txt: update summaries.
+- PATCH_NOTES_v33.txt, PATCH_NOTES_v34.txt, and PATCH_NOTES_v35.txt: update summaries.
 
 HOW TO UPDATE YOUR EXISTING GITHUB PAGES SITE
 1. Extract this ZIP on your computer.
 2. Open your repository: https://github.com/jimsterswagballs-beep/zachs-ultimate-buffet
 3. Click Add file > Upload files.
-4. Drag index.html, game.html, README.txt, cartman.png, PATCH_NOTES_v34.txt, and the whole music folder into the upload area. Do not drag the outer ZachsUltimateBuffet_v34 folder.
-5. Commit directly to main, for example with the message "Update game to v34".
+4. Drag index.html, game.html, README.txt, cartman.png, PATCH_NOTES_v34.txt, PATCH_NOTES_v35.txt, and the whole music folder into the upload area. Do not drag the outer ZachsUltimateBuffet_v35 folder.
+5. Commit directly to main, for example with the message "Update game to v35".
 6. GitHub Pages redeploys automatically. Refresh the public website; if needed, use Ctrl+F5 or a private window.
 
 CO-OP NOTES
@@ -36,3 +36,11 @@ V34 CHANGES
 - Added unique attacks for the first six bosses and clear pre-attack warnings.
 - Settings now include Attack Warnings and Show Hitboxes.
 - Admin cheat panel: open Settings, click ADMIN CODE, enter BUFFET-OVERDRIVE-777. It supports random upgrades, three random upgrades, full heal, +1 max heart, and skipping a boss. The code is visible in the downloadable client and is not secure against other players inspecting source.
+
+
+WHAT'S NEW IN v35
+- Multiplayer lobby rebuilt with clearer fighter cards, room state, and visible host/guest roster.
+- Lower multiplayer bandwidth from change-driven inputs and 10 Hz state snapshots.
+- Snapshots are sequence-checked and skipped when a guest's send buffer is congested.
+- Added room recreate/retry feedback when room setup fails.
+- Updated touch fire input to avoid remaining stuck on after a tap.
