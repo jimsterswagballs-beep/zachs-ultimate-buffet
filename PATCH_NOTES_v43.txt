@@ -1,0 +1,24 @@
+ZACH'S ULTIMATE BUFFET — v43
+TRIPLE T BASEBALLER REMAKE
+
+CHARACTER DESIGN
+- Replaced the fantasy/rift-bat design with a proper baseballer: pinstriped uniform, navy baseball cap, jersey number 3, cleats, glove details and a clear wooden baseball bat held over the shoulder.
+- Removed orbiting fantasy bat-creatures and their rift-themed presentation.
+
+BASEBALL COMBAT
+- Basic attack now fires three stitched baseballs in a compact batting spread. Baseballs have a white shell, red seams and spin animation.
+- Dugout Dash: a protected dash with a visible bat-swing trail and five line-drive baseballs.
+- Grand Slam: a large baseball-bat swing, knocks away nearby enemy projectiles, and fires nine baseballs at the boss.
+- Walk-Off Mode: powers up Triple T for seven seconds, adding two extra baseballs to each basic volley.
+- Triple T's ability FX now use home-plate geometry, bat-swing arcs, chalk trails, stitched baseballs and a Walk-Off label instead of fantasy bat silhouettes.
+
+MULTIPLAYER
+- Remote-player basic fire and powered side volleys use the same baseball visual metadata as the local player.
+- Shared ability effects use the baseball palette and projectiles so co-op players see the same character theme.
+
+FILES
+- Replace both index.html and game.html in the existing GitHub Pages repository with v43 versions.
+- Keep cartman.png and the music folder alongside the HTML files. Commit to main and wait for GitHub Pages to redeploy before refreshing both devices.
+
+VALIDATION
+- JavaScript syntax check and ZIP integrity check are run before release. A live two-device match was not available in this environment; please test Triple T's attacks and co-op visuals after deploying.

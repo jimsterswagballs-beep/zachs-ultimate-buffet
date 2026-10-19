@@ -66,7 +66,7 @@ CHS.forEach((c,i)=>{const x=30+i*190,s=i==SEL,h=M.x>x&&M.x<x+175&&M.y>100&&M.y<4
 spr(CI[i],x+87,y0+88+Math.sin(t*3+i)*(s?5:2),s?96:80);T(c[0],x+87,y0+168,17,s?'#f0b94a':'#f1e8d6');T(c[1],x+87,y0+190,12,'#9fe8ff');const b=CHB[i];[['HP',(4+b[0])/8,'#ff4d6d'],['SPD',b[1]/1.5,'#7dffb0'],['DMG',b[3]/1.8,'#ffd24a'],['RATE',b[2]/1.7,'#9fe8ff']].forEach((q,j)=>{const yy=y0+216+j*22;T(q[0],x+12,yy,11,'#b9aecb','left');X.fillStyle='#0a0618';X.fillRect(x+52,yy-5,108,10);X.fillStyle=q[2];X.fillRect(x+52,yy-5,108*Math.min(1,q[1]),10)});const k=Object.keys(b[4]);T(k.length?'Starts: '+k.join(', '):'Starts: nothing',x+87,y0+316,10,'#7dffb0')});
 X.fillStyle='#0a0618cc';X.beginPath();X.roundRect(40,450,720,40,10);X.fill();T(CHD[SEL],400,462,14,'#f1e8d6');T('Abilities: '+CAB[SEL].map((a,j)=>(j+1)+' '+a[0]).join('   '),400,481,12,'#7df9ff');X.fillStyle='#f0b94a';X.beginPath();X.roundRect(300,500,200,40,20);X.fill();T('Start Run',400,520,18,'#120c24');T('Click, press 1-4 or left/right to choose. Enter starts, Esc goes back.',400,H-18,12,'#b9aecb')}
 function titleExtra(){const t=tm;X.save();X.globalCompositeOperation='lighter';for(let i=0;i<3;i++){const u=((t*.25+i*.37)%1),x=W*(1.2-u*1.6)+i*60,y=u*260+i*40;X.strokeStyle='#ffffff';X.globalAlpha=Math.sin(u*Math.PI)*.8;X.lineWidth=2;X.beginPath();X.moveTo(x,y);X.lineTo(x+70,y-40);X.stroke()}X.restore();
-CHS.forEach((c,i)=>spr(CI[i],340+i*46,552+Math.sin(t*3+i)*4,i==SEL?44:36));T(TIPS[(t/4|0)%TIPS.length],400,230,13,'#9fe8ff');T('Best run: boss '+(SET.best||0)+'   Runs: '+(SET.runs||0),788,22,12,'#b9aecb','right');T('\u266a '+(mCur>=0?TN[mCur]:'click anywhere to start the music')+(SY?'  [BUILT-IN SYNTH: music folder not found next to game.html]':''),12,22,12,SY?'#ff9f43':'#b9aecb','left');T('v42',788,H-12,11,'#6a5a90','right')}
+CHS.forEach((c,i)=>spr(CI[i],340+i*46,552+Math.sin(t*3+i)*4,i==SEL?44:36));T(TIPS[(t/4|0)%TIPS.length],400,230,13,'#9fe8ff');T('Best run: boss '+(SET.best||0)+'   Runs: '+(SET.runs||0),788,22,12,'#b9aecb','right');T('\u266a '+(mCur>=0?TN[mCur]:'click anywhere to start the music')+(SY?'  [BUILT-IN SYNTH: music folder not found next to game.html]':''),12,22,12,SY?'#ff9f43':'#b9aecb','left');T('v43',788,H-12,11,'#6a5a90','right')}
 const LORE2=['Chef Chaos was the First Cook. He guarded the Plate in the oven vault, and Hunger ate his recipes.','King Broccoli hid his shard in a royal garden and swore never to let Hunger taste a vegetable again.','Captain Soda sailed the shard across the Frozen Buffet. It fizzes with every storm he chases.','Donut Titan was the rim of the Plate. His glaze keeps the shard sweet and remembers Zach ancestors.','Colonel Chicken drilled the last army of the war. His nuggets still march in perfect formation.','Chairman Coffee never slept, so he saw every war loop. He bargains with the shard to stay awake.','Evil Zach is the Plate hunger given a face: what Zach becomes if he never says no.','The Hollow King ruled the Underground Kingdom until Hunger ate his name. The shard keeps his crown warm.','Chronos rewound the war again and again to dodge its ending. Each loop cracked the shard a little more.','Leviathan Prime drowned the war memories in the deep. The shard hums with every mistake it remembers.','The Crimson Emperor tried to rule Hunger itself. The shard bled through his crown and made him cruel.','The False Hero is built from every run you will ever finish. He holds the shard of what could have been.','The Hunger is not the enemy. It is the oldest wanting, and it kept the final shard as a promise.','The Forgotten Creator wrote the Plate as a first draft of a kinder world, and left the pen for you.'];
 const CABold=[[['Feast Wave',9,'#ffd24a',()=>{const p=g.p,b=g.b;g.eb=g.eb.filter(e=>Math.hypot(e.x-p.x,e.y-p.y)>230);ring2(p.x,p.y,'#ffd24a',.6,700);em(p.x,p.y,80,{c:'#ffe27a',s:500,l:.7,r:5});if(Math.hypot(b.x-p.x,b.y-p.y)<330&&b.inv<=0)b.hp-=90;g.shake=.5}],['Bottomless Plate',20,'#fff3b0',()=>{g.shd=(g.shd||0)+2;g.p.hp=Math.min(g.p.mh,g.p.hp+.5)}],['Hunger Surge',24,'#ff4d6d',()=>{g.sg2=8}]],
 [['Ground Slam',9,'#ff9d2e',()=>{const p=g.p,b=g.b;g.eb=g.eb.filter(e=>Math.hypot(e.x-p.x,e.y-p.y)>200);ring2(p.x,p.y,'#ff9d2e',.7,600);em(p.x,p.y,90,{c:'#c9a27a',s:450,l:.8,r:5,g:500});if(Math.hypot(b.x-p.x,b.y-p.y)<260&&b.inv<=0)b.hp-=140;g.shake=.8}],['Iron Wall',16,'#9aa5b1',()=>{g.refl=3.5}],['Borg Overdrive',26,'#4cc9f0',()=>{g.od=6}]],
@@ -917,7 +917,7 @@ function mpUpdatePlayers(dt){
     if((keys.fire||keys.autoFire)&&pl.shotCd<=0&&b.hp>0&&b.ls!==1){
       pl.shotCd=(pl.char===2?0.5:Math.max(.09,.23/CHB[pl.char][2]/(pl.boost>0?1.5:1)));
       const a=Math.atan2(b.y-pl.y,b.x-pl.x),dm=5.6*CHB[pl.char][3]*(g.bonus||1)*(1+.6*((g.u&&g.u.pizza)||0))*(pl.boost>0?1.8:1);
-      g.pb.push({x:pl.x+Math.cos(a)*17,y:pl.y+Math.sin(a)*17,vx:Math.cos(a)*520,vy:Math.sin(a)*520,d:dm,lf:2,hit:0,remote:1,c:'#9fe8ff'});if(pl.char===2&&pl.ttNight>0){for(const side of [-1,1]){const sa=a+side*.24;g.pb.push({x:pl.x+Math.cos(sa)*15,y:pl.y+Math.sin(sa)*15,vx:Math.cos(sa)*470,vy:Math.sin(sa)*470,d:dm*.62,lf:2,hit:0,remote:1,bo:1,big:1,ownerId:pl.id,c:side<0?'#b57bff':'#ffd24a'})}ring2(pl.x,pl.y,'#b57bff',.12,100)}if(pl.char===2&&pl.ttEncore>0){pl.ttShot=(pl.ttShot||0)+1;if(pl.ttShot%3===0){for(let tti=-1;tti<=1;tti+=2)g.pb.push({x:pl.x+Math.cos(a+tti*.13)*17,y:pl.y+Math.sin(a+tti*.13)*17,vx:Math.cos(a+tti*.13)*500,vy:Math.sin(a+tti*.13)*500,d:dm*.72,lf:2.6,hit:0,remote:1,bo:1,big:1,ownerId:pl.id,c:tti<0?'#ffd24a':'#2ec4b6'});ring2(pl.x,pl.y,'#2ec4b6',.14,115)}}
+      g.pb.push({x:pl.x+Math.cos(a)*17,y:pl.y+Math.sin(a)*17,vx:Math.cos(a)*520,vy:Math.sin(a)*520,d:dm,lf:2,hit:0,remote:1,c:'#9fe8ff'});if(pl.char===2&&pl.ttNight>0){for(const side of [-1,1]){const sa=a+side*.24;g.pb.push({x:pl.x+Math.cos(sa)*15,y:pl.y+Math.sin(sa)*15,vx:Math.cos(sa)*470,vy:Math.sin(sa)*470,d:dm*.62,lf:2,hit:0,remote:1,baseball:1,big:1,ownerId:pl.id,c:'#fff7e8',rot:tm*6+side})}ring2(pl.x,pl.y,'#b57bff',.12,100)}if(pl.char===2&&pl.ttEncore>0){pl.ttShot=(pl.ttShot||0)+1;if(pl.ttShot%3===0){for(let tti=-1;tti<=1;tti+=2)g.pb.push({x:pl.x+Math.cos(a+tti*.13)*17,y:pl.y+Math.sin(a+tti*.13)*17,vx:Math.cos(a+tti*.13)*500,vy:Math.sin(a+tti*.13)*500,d:dm*.72,lf:2.6,hit:0,remote:1,baseball:1,big:1,ownerId:pl.id,c:'#fff7e8',rot:tm*6+tti});ring2(pl.x,pl.y,'#2ec4b6',.14,115)}}
     }
     pl.abilityCd=pl.abilityCd||[0,0,0];for(let j=0;j<3;j++)pl.abilityCd[j]=Math.max(0,(pl.abilityCd[j]||0)-dt);
     if(pl.abilityQueue&&pl.abilityQueue.length){const j=pl.abilityQueue.shift();mpRemoteAbility(pl,j)}
@@ -1171,7 +1171,7 @@ const coopAttackPace=MP.active&&MP.started&&MP.role==='host'?Number(MP.settings&
 if(b.warn){b.warn.t-=dt;if(b.warn.t<=0){const k=b.warn.key,a=AT[k];b.warn=null;if(a){if(a[1])b.run={f:a[3],l:a[1],iv:a[2]*(1-b.idx*.04)*(b.d[0]==='The Hollow King'?1.45:1),ac:0};else{a[3](b);b.cd=1.7/(1+ph*.1+b.idx*.07)*(b.d[0]==='The Hollow King'?1.45:1);if(b.idx>=2&&R()<.12+b.idx*.03){const k2=b.d[3][R()*b.d[3].length|0]||k,a2=AT[k2];if(a2&&!a2[1])g.dl.push([.7,()=>{if(S=='play'){g.cast=[a2[0]+'!',1.5];a2[3](b)}}])}}}}}
 if(b.run&&!(g.frz>0)){const r=b.run;r.l-=dt;r.ac-=dt;if(r.ac<=0){r.f(b);r.ac=r.iv}if(r.l<=0){b.run=null;b.cd=1.5/(1+ph*.1+b.idx*.07)}}
 if(g.cast)g.cast[1]-=dt;if(g.say)g.say[1]-=dt;if(b.ls==1)lsTick(dt);if(b.ls!=1&&b.hp>0)GM[b.idx](b,dt);
-p.fire-=dt;if(p.fire<=0&&(SET.af||M.t||M.d||K.j)&&!(MP.active&&MP.role==='host'&&MP.started&&MP.localDown)){p.fire=(g.pc===2?0.5:0.23/(1+.2*(u.rate||0))/CHB[g.pc||0][2]/(g.sg2>0?1.5:1)/(g.od>0?1.6:1)/(g.spd>0?1.5:1)/(g.ocf>0?2:1)/(g.cat>0?1.4:1));const dm=5.6*(1+.6*(u.pizza||0))*g.bonus,a0=(SET.aa||M.t)?Math.atan2(b.y-p.y,b.x-p.x):Math.atan2(M.y-p.y,M.x-p.x),n=1+(u.multi||0);chAtk(a0,dm,n);if(g.pc===2&&g.ttNight>0){for(const side of [-1,1])sh(p.x,p.y,a0+side*.24,470,dm*.62,{bo:1,big:1,lf:2,c:side<0?'#b57bff':'#ffd24a'});ring2(p.x,p.y,'#b57bff',.12,100)}if(g.pc===2&&g.ttEncore>0){g.ttShot=(g.ttShot||0)+1;if(g.ttShot%3===0){for(let tti=-1;tti<=1;tti+=2)sh(p.x,p.y,a0+tti*.13,500,dm*.72,{bo:1,big:1,lf:2.6,c:tti<0?'#ffd24a':'#2ec4b6'});ring2(p.x,p.y,'#2ec4b6',.14,115)}}em(p.x+Math.cos(a0)*16,p.y+Math.sin(a0)*16,3,{c:'#ffe27a',s:120,l:.2,r:2.5});LF.length<10&&lens(p.x+Math.cos(a0)*18,p.y+Math.sin(a0)*18,10,'#ffe27a',.1);sfx('shoot');if(u.st&&b.ls!=1&&((g.shn=(g.shn||0)+1)%10==0)){const had=g.u.chain,c=g.cd.chain;g.u.chain=1;g.cd.chain=0;cast('chain');g.u.chain=had;g.cd.chain=c;g.spam=0}if(u.echo)g.dl.push([.2,()=>chAtk(a0,dm*.6,n)]);for(let i=0;i<(u.snack||0)*2;i++)sh(p.x,p.y,R()*PI2,420,dm*.6)}
+p.fire-=dt;if(p.fire<=0&&(SET.af||M.t||M.d||K.j)&&!(MP.active&&MP.role==='host'&&MP.started&&MP.localDown)){p.fire=(g.pc===2?0.5:0.23/(1+.2*(u.rate||0))/CHB[g.pc||0][2]/(g.sg2>0?1.5:1)/(g.od>0?1.6:1)/(g.spd>0?1.5:1)/(g.ocf>0?2:1)/(g.cat>0?1.4:1));const dm=5.6*(1+.6*(u.pizza||0))*g.bonus,a0=(SET.aa||M.t)?Math.atan2(b.y-p.y,b.x-p.x):Math.atan2(M.y-p.y,M.x-p.x),n=1+(u.multi||0);chAtk(a0,dm,n);if(g.pc===2&&g.ttNight>0){for(const side of [-1,1])sh(p.x,p.y,a0+side*.24,470,dm*.62,{big:1,baseball:1,lf:2,c:'#fff7e8',rot:tm*6+side});ring2(p.x,p.y,'#b57bff',.12,100)}if(g.pc===2&&g.ttEncore>0){g.ttShot=(g.ttShot||0)+1;if(g.ttShot%3===0){for(let tti=-1;tti<=1;tti+=2)sh(p.x,p.y,a0+tti*.13,500,dm*.72,{big:1,baseball:1,lf:2.6,c:'#fff7e8',rot:tm*6+tti});ring2(p.x,p.y,'#2ec4b6',.14,115)}}em(p.x+Math.cos(a0)*16,p.y+Math.sin(a0)*16,3,{c:'#ffe27a',s:120,l:.2,r:2.5});LF.length<10&&lens(p.x+Math.cos(a0)*18,p.y+Math.sin(a0)*18,10,'#ffe27a',.1);sfx('shoot');if(u.st&&b.ls!=1&&((g.shn=(g.shn||0)+1)%10==0)){const had=g.u.chain,c=g.cd.chain;g.u.chain=1;g.cd.chain=0;cast('chain');g.u.chain=had;g.cd.chain=c;g.spam=0}if(u.echo)g.dl.push([.2,()=>chAtk(a0,dm*.6,n)]);for(let i=0;i<(u.snack||0)*2;i++)sh(p.x,p.y,R()*PI2,420,dm*.6)}
 g.ft-=dt;if(g.ft<=0){g.ft=1;for(let i=0;i<(u.fol||0);i++){const fx=p.x+(i%2?1:-1)*(24+i*8);sh(fx,p.y+20,Math.atan2(b.y-p.y,b.x-fx),480,5)}}
 for(const s of g.pb){if(u.hot){const v=Math.hypot(s.vx,s.vy),a=Math.atan2(b.y-s.y,b.x-s.x),c=Math.min(1,u.hot*3*dt);s.vx+=(Math.cos(a)*v-s.vx)*c;s.vy+=(Math.sin(a)*v-s.vy)*c}
 if(s.lf!==undefined&&(s.lf-=dt)<0)s.dead=1;if(s.bo){s.t=(s.t||0)+dt;if(s.t>.5&&!s.rt){s.rt=1;s.hit=0}if(s.rt){const owner=s.ownerId&&MP.players[s.ownerId]||p,ox=owner.x,oy=owner.y,a=Math.atan2(oy-s.y,ox-s.x),v=Math.hypot(s.vx,s.vy)||500;s.vx+=(Math.cos(a)*v*1.2-s.vx)*dt*8;s.vy+=(Math.sin(a)*v*1.2-s.vy)*dt*8;if(Math.hypot(ox-s.x,oy-s.y)<22){s.dead=1;if(owner===p)g.cat=1.2;else owner.boost=1.2;em(ox,oy,6,{c:'#ffd24a',s:200,l:.3})}}}
@@ -1446,7 +1446,7 @@ X.save();X.translate(b.x,b.y);X.rotate(tm*.3);X.globalCompositeOperation='lighte
 if(SET.sg){X.save();X.globalCompositeOperation='lighter';{const pu=1+.1*Math.sin(tm*5)+(b.hit>0?.25:0);glowAt(b.x,b.y,b.sz*3.4*pu,b.c,.5+.08*b.p0);glowAt(b.x,b.y,b.sz*1.6*pu,'#ffffff',.18+(b.hit>0?.25:0))}X.restore()}
 spr(SI[b.idx],b.x,b.y,b.sz*2.2*(b.hit>0?1.07:1)*(b.d[0]=='The Hunger'?1.4:1)*(1+b.p0*.03)*(1+Math.max(0,b.sq||0)*.5)*(b.ls==1?1+lsBeat*.12:1));if(b.p0>=2){X.strokeStyle=b.c;X.globalAlpha=.35;X.lineWidth=3;X.beginPath();X.arc(b.x,b.y,b.sz*(1.7+.15*Math.sin(tm*6)),0,PI2);X.stroke();X.globalAlpha=1}
 if(b.inv>0){X.strokeStyle='#9fe8ff';X.globalAlpha=.5+.3*Math.sin(tm*20);X.lineWidth=4;X.beginPath();X.arc(b.x,b.y,b.sz*1.5,0,PI2);X.stroke();X.globalAlpha=1}
-X.globalCompositeOperation='lighter';for(const s of g.pb){if(s.bo){const tt=s.batStyle==='tripleT'||Number(s.ownerChar)===2||((s.ownerChar===undefined)&&g.pc===2),cc=s.c||(tt?'#2ec4b6':'#c98a5a'),ed=tt?'#b57bff':'#e8c39e';X.save();X.translate(s.x,s.y);X.rotate(tm*(tt?11:18)+(s.t||0));if(s.big)X.scale(tt?1.85:2.2,tt?1.85:2.2);X.shadowColor=cc;X.shadowBlur=tt?10:4;X.fillStyle=cc;X.beginPath();X.moveTo(0,6);X.lineTo(-11,-4);X.lineTo(-10,-11);X.lineTo(-4,-7);X.lineTo(0,-13);X.lineTo(4,-7);X.lineTo(10,-11);X.lineTo(11,-4);X.closePath();X.fill();X.shadowBlur=0;X.strokeStyle=ed;X.lineWidth=1.25;X.beginPath();X.moveTo(-7,-1);X.lineTo(-1,4);X.lineTo(0,6);X.lineTo(1,4);X.lineTo(7,-1);X.stroke();X.fillStyle='#fff';X.beginPath();X.arc(0,-2,1.7,0,PI2);X.fill();X.restore();continue}if(s.big){const r0=s.mega?15:9;ball(s.x,s.y,r0,'#ffb84d','#c9651f');if(s.mega){X.strokeStyle='#fff3b0';X.lineWidth=2;X.beginPath();X.arc(s.x,s.y,r0+3+Math.sin(tm*20)*1.5,0,PI2);X.stroke()}continue}if(SET.sg)glowAt(s.x,s.y,20,'#ffd54a',.7);X.strokeStyle='#ffd54a';X.lineWidth=5;X.globalAlpha=.8;X.lineCap='round';X.beginPath();X.moveTo(s.x,s.y);X.lineTo(s.x-s.vx*.03,s.y-s.vy*.03);X.stroke();X.strokeStyle='#fff';X.lineWidth=2;X.stroke()}
+X.globalCompositeOperation='lighter';for(const s of g.pb){if(s.baseball){zubDrawBaseballProjectile(s);continue}if(s.bo){const tt=s.batStyle==='tripleT'||Number(s.ownerChar)===2||((s.ownerChar===undefined)&&g.pc===2),cc=s.c||(tt?'#2ec4b6':'#c98a5a'),ed=tt?'#b57bff':'#e8c39e';X.save();X.translate(s.x,s.y);X.rotate(tm*(tt?11:18)+(s.t||0));if(s.big)X.scale(tt?1.85:2.2,tt?1.85:2.2);X.shadowColor=cc;X.shadowBlur=tt?10:4;X.fillStyle=cc;X.beginPath();X.moveTo(0,6);X.lineTo(-11,-4);X.lineTo(-10,-11);X.lineTo(-4,-7);X.lineTo(0,-13);X.lineTo(4,-7);X.lineTo(10,-11);X.lineTo(11,-4);X.closePath();X.fill();X.shadowBlur=0;X.strokeStyle=ed;X.lineWidth=1.25;X.beginPath();X.moveTo(-7,-1);X.lineTo(-1,4);X.lineTo(0,6);X.lineTo(1,4);X.lineTo(7,-1);X.stroke();X.fillStyle='#fff';X.beginPath();X.arc(0,-2,1.7,0,PI2);X.fill();X.restore();continue}if(s.big){const r0=s.mega?15:9;ball(s.x,s.y,r0,'#ffb84d','#c9651f');if(s.mega){X.strokeStyle='#fff3b0';X.lineWidth=2;X.beginPath();X.arc(s.x,s.y,r0+3+Math.sin(tm*20)*1.5,0,PI2);X.stroke()}continue}if(SET.sg)glowAt(s.x,s.y,20,'#ffd54a',.7);X.strokeStyle='#ffd54a';X.lineWidth=5;X.globalAlpha=.8;X.lineCap='round';X.beginPath();X.moveTo(s.x,s.y);X.lineTo(s.x-s.vx*.03,s.y-s.vy*.03);X.stroke();X.strokeStyle='#fff';X.lineWidth=2;X.stroke()}
 for(const e of g.eb){if(SET.sg&&SET.glow)glowAt(e.x,e.y,e.r*3.4,e.c,.55);if(SET.sg&&FXO.sk){X.strokeStyle=e.c;X.globalAlpha=.35;X.lineWidth=e.r*1.2;X.lineCap='round';X.beginPath();X.moveTo(e.x,e.y);X.lineTo(e.x-e.vx*.06,e.y-e.vy*.06);X.stroke();X.globalAlpha=1}bdraw(e)}X.globalCompositeOperation='source-over';X.globalAlpha=1;
 for(let i=0;i<(g.u.taco||0);i++){const a=g.t*3+i*PI2/g.u.taco;ic('taco',g.p.x+Math.cos(a)*70,g.p.y+Math.sin(a)*70,28+g.i*2)}
 for(let i=0;i<(g.u.fol||0);i++)ic('fol',g.p.x+(i%2?1:-1)*(24+i*8),g.p.y+22,18);
@@ -1789,8 +1789,8 @@ function mpRemoteFire(pl,a,dm,n,allowEcho=true){
   const start=g.pb.length;
   mpWithPlayerContext(pl,()=>{
     chAtk(a,dm,n);
-    if(pl.char===2&&pl.ttNight>0){for(const side of [-1,1]){const sa=a+side*.24;sh(pl.x,pl.y,sa,470,dm*.62,{bo:1,big:1,lf:2,ownerId:pl.id,c:side<0?'#b57bff':'#ffd24a'});}ring2(pl.x,pl.y,'#b57bff',.12,100);}
-    if(pl.char===2&&pl.ttEncore>0){pl.ttShot=(pl.ttShot||0)+1;if(pl.ttShot%3===0){for(const side of [-1,1])sh(pl.x,pl.y,a+side*.13,500,dm*.72,{bo:1,big:1,lf:2.6,ownerId:pl.id,c:side<0?'#ffd24a':'#2ec4b6'});ring2(pl.x,pl.y,'#2ec4b6',.14,115);}}
+    if(pl.char===2&&pl.ttNight>0){for(const side of [-1,1]){const sa=a+side*.24;sh(pl.x,pl.y,sa,470,dm*.62,{big:1,baseball:1,lf:2,ownerId:pl.id,c:'#fff7e8',rot:tm*6+side});}ring2(pl.x,pl.y,'#b57bff',.12,100);}
+    if(pl.char===2&&pl.ttEncore>0){pl.ttShot=(pl.ttShot||0)+1;if(pl.ttShot%3===0){for(const side of [-1,1])sh(pl.x,pl.y,a+side*.13,500,dm*.72,{big:1,baseball:1,lf:2.6,ownerId:pl.id,c:'#fff7e8',rot:tm*6+side});ring2(pl.x,pl.y,'#2ec4b6',.14,115);}}
     if(g.u&&g.u.snack)for(let i=0;i<Math.min(8,(g.u.snack||0)*2);i++)sh(pl.x,pl.y,R()*PI2,420,dm*.6,{ownerId:pl.id,lf:2});
   });
   for(let i=start;i<g.pb.length;i++){g.pb[i].ownerId=pl.id;g.pb[i].remote=1;}
@@ -2153,84 +2153,106 @@ LOG.unshift(['v39 (latest)','Added Max, a sunglasses-wearing Aura Striker with a
 LOG.unshift(["v40 (latest)","Mason Borg’s melee combo no longer destroys enemy bullets. Regular swings damage bosses only; Aegis Counter and separate projectile-clearing abilities remain unchanged."]);
 
 // v42: Triple T combat remake and a character-specific FX pass for every fighter ability.
-CHS[2]=['Triple T','Rift-bat showman','Blink strikes, batline volleys,|and a Moonbreaker power-up.'];
-CHD[2]='Triple T is a quick, showy bat trickster. Riftstep Rally blinks through danger, Batline Breaker launches a converging swarm, and Moonbreaker empowers returning bats for a short burst.';
+CHS[2]=['Triple T','Baseball slugger','Power swings, grand slams,|and a Walk-Off power-up.'];
+CHD[2]='Triple T is a baseballer with a real wooden bat and a pinstriped uniform. He dashes into a power swing, clears danger with a Grand Slam, and enters Walk-Off Mode to pepper bosses with fast baseballs.';
 CABD[2]=[
-  'Blink toward the boss, leave shadow afterimages, and sling three heavy returning bats.',
-  'Clear nearby bullets, then launch a 9-bat converging barrage from a rotating formation.',
-  'For 7 seconds, every basic volley gains two extra returning bats. Opens with a moonlit bat ring.'
+  'Dash toward the boss with a powerful bat swing and a spread of line-drive baseballs.',
+  'Sweep the bat in a Grand Slam, knocking away nearby enemy pitches and firing a nine-ball barrage.',
+  'For 7 seconds, every basic attack gains two extra stitched baseballs. A Walk-Off power-up.'
 ];
 
 // Triple T redesign: neon cap, padded jersey, glove details and three floating rift-bats.
+// v43 baseball rendering: an actual wood bat and a stitched baseball (not flying bat-creatures).
+function zubDrawBaseballBat(x,y,scale=1,angle=0,wood='#c58b4b'){
+  X.save();X.translate(x,y);X.rotate(angle);X.scale(scale,scale);
+  X.shadowColor='#402611';X.shadowBlur=3;
+  X.fillStyle=wood;X.beginPath();X.moveTo(-1.8,17);X.lineTo(-1.8,-13);X.quadraticCurveTo(-2.4,-20,-4.2,-25);X.quadraticCurveTo(-4.5,-29,0,-31);X.quadraticCurveTo(4.5,-29,4.2,-25);X.quadraticCurveTo(2.4,-20,1.8,-13);X.lineTo(1.8,17);X.closePath();X.fill();X.shadowBlur=0;
+  X.strokeStyle='#f2ca87';X.lineWidth=1;X.beginPath();X.moveTo(-.4,-27);X.quadraticCurveTo(-1.2,-21,0,-15);X.stroke();
+  X.fillStyle='#f0eee6';X.fillRect(-1.9,7,3.8,9);
+  X.strokeStyle='#c83d45';X.lineWidth=1;for(let k=0;k<4;k++){X.beginPath();X.moveTo(-1.8,8+k*2);X.lineTo(1.8,9+k*2);X.stroke()}
+  X.fillStyle='#59351f';X.beginPath();X.arc(0,17,2.5,0,PI2);X.fill();X.restore();
+}
+function zubDrawBaseballProjectile(s){
+  const x=Number(s.x)||0,y=Number(s.y)||0,r=Number(s.ballR)||(s.big?8.2:5.7),rot=Number(s.rot)||tm*10+(Number(s.t)||0);
+  X.save();X.translate(x,y);X.rotate(rot);X.globalCompositeOperation='source-over';
+  if(SET.sg){X.shadowColor='#f1ca79';X.shadowBlur=s.big?8:4}
+  const grad=X.createRadialGradient(-r*.32,-r*.38,r*.08,0,0,r);grad.addColorStop(0,'#fffef8');grad.addColorStop(.72,'#f3f0e7');grad.addColorStop(1,'#c9c7c0');X.fillStyle=grad;X.beginPath();X.arc(0,0,r,0,PI2);X.fill();X.shadowBlur=0;X.strokeStyle='#c73542';X.lineWidth=Math.max(.8,r*.13);X.lineCap='round';
+  for(const side of[-1,1]){X.beginPath();X.moveTo(side*r*.32,-r*.82);X.bezierCurveTo(side*r*.94,-r*.38,side*r*.94,r*.38,side*r*.32,r*.82);X.stroke();for(let q=-3;q<=3;q++){const yy=q*r*.21,xx=side*(r*.58+Math.sqrt(Math.max(0,1-(yy/(r*.92))**2))*r*.06);X.beginPath();X.moveTo(xx-r*.1,yy-r*.07);X.lineTo(xx+r*.04,yy+r*.07);X.stroke()}}
+  X.restore();
+}
 SPR[19]=()=>{
-  const pulse=.5+.5*Math.sin(tm*7);
-  X.save();X.globalCompositeOperation='lighter';
-  X.globalAlpha=.24+pulse*.14;X.strokeStyle='#2ec4b6';X.lineWidth=1.5;X.beginPath();X.ellipse(0,5,26+pulse*2,31+pulse*2,tm*.18,0,PI2);X.stroke();
-  X.globalAlpha=.7;X.strokeStyle='#b57bff';X.lineWidth=1.2;X.beginPath();X.ellipse(0,5,31,25,-tm*.23,tm,tm+2.4);X.stroke();X.restore();
-  // Three orbiting bats are silhouettes, not sticks, so the character reads at small sizes.
-  for(let i=0;i<3;i++){
-    const a=-tm*2.2+i*PI2/3,rx=26+Math.sin(tm*4+i)*2,ry=11+Math.cos(tm*3+i)*2;
-    X.save();X.translate(Math.cos(a)*rx,-5+Math.sin(a)*ry);X.rotate(a+.4);X.globalCompositeOperation='lighter';
-    const cc=['#ffd24a','#2ec4b6','#b57bff'][i];X.shadowColor=cc;X.shadowBlur=10;X.fillStyle=cc;X.beginPath();X.moveTo(0,7);X.lineTo(-10,-4);X.lineTo(-9,-11);X.lineTo(-3,-7);X.lineTo(0,-12);X.lineTo(3,-7);X.lineTo(9,-11);X.lineTo(10,-4);X.closePath();X.fill();X.shadowBlur=0;ball(0,2,2.6,'#fff','#e8e8ff');X.restore();
-  }
-  // Deep teal varsity jacket, pale piping and gloves.
-  rr(-16,2,32,25,'#142b4a',7);rr(-12,5,24,16,'#1c526a',4);rr(-2,4,4,21,'#ffd24a',1);rr(-10,9,7,7,'#b57bff',2);T('T',-6.5,12,7,'#fff3b0');
-  rr(-20,8,8,16,'#2ec4b6',3);rr(12,8,8,16,'#2ec4b6',3);ball(-17,24,4,'#e9f7ff','#7ca3b8');ball(17,24,4,'#e9f7ff','#7ca3b8');
-  ball(0,-8,13,'#d9a77c','#8b5942');
-  // Hair and a luminous angled cap brim.
-  poly('#1d1529',-14,-10,-12,-22,-5,-18,1,-24,10,-18,14,-10,7,-14,-6,-13);
-  rr(-14,-20,28,7,'#173a66',3);poly('#2ec4b6',-8,-19,7,-19,16,-13,-8,-14);X.strokeStyle='#ffd24a';X.lineWidth=1.4;X.beginPath();X.moveTo(-10,-17);X.lineTo(8,-17);X.stroke();
-  ball(-5,-7,2.8,'#fff','#dceeff');ball(5,-7,2.8,'#fff','#dceeff');ball(-4.4,-6.8,1.3,'#111827','#111827');ball(5.6,-6.8,1.3,'#111827','#111827');
-  X.strokeStyle='#6e3540';X.lineWidth=1.8;X.beginPath();X.moveTo(-5,1);X.quadraticCurveTo(0,4,6,1);X.stroke();
-  // Shin pads and bright sneaker soles.
-  rr(-9,24,6,7,'#182238',2);rr(3,24,6,7,'#182238',2);rr(-12,29,11,3,'#ffd24a',1);rr(1,29,11,3,'#ffd24a',1);
+  const stride=Math.sin(tm*8)*1.4,breath=Math.sin(tm*3)*.6;
+  // Subtle chalk ring and running-diamond marks, rather than fantasy rift rings.
+  X.save();X.globalAlpha=.20+.06*Math.sin(tm*4);X.strokeStyle='#f4efe1';X.lineWidth=1.4;X.setLineDash([3,6]);X.beginPath();X.ellipse(0,15,24,10,0,0,PI2);X.stroke();X.setLineDash([]);X.restore();
+  // The bat is a solid wooden baseball bat held over the shoulder.
+  zubDrawBaseballBat(18,4,.70,-.43,'#c58b4b');
+  // Navy pants, white piping, red-and-white cleats.
+  poly('#24466d',-11,14,-1,14,-2+stride,29,-12+stride,29);
+  poly('#24466d',1,14,11,14,12-stride,29,2-stride,29);
+  X.strokeStyle='#f3f0e8';X.lineWidth=1.6;X.beginPath();X.moveTo(-6,17);X.lineTo(-7+stride,27);X.moveTo(6,17);X.lineTo(7-stride,27);X.stroke();
+  rr(-14+stride,28,13,5,'#f2eee4',2);rr(1-stride,28,13,5,'#f2eee4',2);rr(-14+stride,31,13,2,'#c93442',1);rr(1-stride,31,13,2,'#c93442',1);
+  // Baseball jersey with pinstripes, team piping and number three.
+  rr(-16,0+breath,32,21,'#f4f1e8',5);rr(-16,0+breath,32,5,'#24466d',3);rr(-3,2+breath,6,19,'#d33a45',1);
+  X.strokeStyle='#718ba9';X.lineWidth=1;for(const xx of[-10,-6,6,10]){X.beginPath();X.moveTo(xx,6+breath);X.lineTo(xx,17+breath);X.stroke()}
+  rr(-18,5,6,14,'#f3f0e8',3);rr(12,5,6,13,'#f3f0e8',3);rr(-19,16,7,5,'#c93442',2);rr(13,15,7,5,'#c93442',2);
+  ball(-16,18,4,'#c93442','#781e2b');ball(17,17,4,'#c93442','#781e2b');
+  T('3',0,10,10,'#c93442');
+  // Head, determined expression, and a clear baseball cap with curved brim.
+  rr(-4,-3,8,7,'#dba77e',2);ball(0,-10,12.4,'#dfae86','#a66f50');
+  ball(-12,-10,2.3,'#dba77e','#a66f50');ball(12,-10,2.3,'#dba77e','#a66f50');
+  poly('#3b271d',-12,-12,-11,-20,-5,-24,2,-22,10,-19,12,-12,5,-15,-5,-15);
+  rr(-14,-22,28,7,'#24466d',3);poly('#f3f0e8',-9,-21,6,-21,13,-16,-9,-17);rr(-17,-17,23,3,'#183452',2);
+  T('T',1,-19,5,'#fff7e8');eyes(-10,2.7,5,'#20202a');
+  X.strokeStyle='#6f2c2b';X.lineWidth=1.7;X.beginPath();X.moveTo(-4,-3);X.quadraticCurveTo(0,0,5,-3);X.stroke();
+  // Glove stitching and an occasional baseball sparkle near his bat.
+  X.strokeStyle='#fff8e8';X.lineWidth=1;X.beginPath();X.arc(-16,18,3.1,.3,2.5);X.stroke();
+  if(Math.sin(tm*5)>.94){zubDrawBaseballProjectile({x:28,y:-12,r:0,ballR:3.1,rot:tm*4});}
 };
 
-// A remade, tighter Triple T basic volley: three distinct rift-bats with staggered speed.
+// Triple T's basic attack: three stitched baseballs hit from a compact batting spread.
 const _zubChAtkV42=chAtk;
 chAtk=function(a0,dm,n){
   if(!g||!g.p||mpCharIndex(g.pc,0)!==2)return _zubChAtkV42(a0,dm,n);
-  const p=g.p,cols=['#b57bff','#2ec4b6','#ffd24a'];
+  const p=g.p,offs=[-.18,0,.18],speeds=[515,585,535],weights=[.76,.96,.82];
   for(let i=0;i<3;i++){
-    const off=(i-1)*.255,spd=i===1?545:490;
-    sh(p.x,p.y,a0+off,spd,dm*(i===1?.92:.78),{bo:1,big:1,lf:3.1,c:cols[i],batStyle:'tripleT'});
+    sh(p.x,p.y,a0+offs[i],speeds[i],dm*weights[i],{big:1,baseball:1,lf:2.65,c:'#fff7e8',rot:tm*4+i*1.8});
   }
-  if(R()<.45)em(p.x,p.y,2,{c:'#2ec4b6',s:100,l:.2,r:2});
+  em(p.x+Math.cos(a0)*15,p.y+Math.sin(a0)*15,3,{c:'#f4efe1',s:95,l:.18,r:2});
 };
 
 // New Triple T ability kit. Cooldowns continue using the game's standard character-ability system.
 CAB[2]=[
- ['Riftstep Rally',10,'#b57bff',()=>{
+ ['Dugout Dash',10,'#c93442',()=>{
    const p=g.p,b=g.b,a=Math.atan2(b.y-p.y,b.x-p.x),ox=p.x,oy=p.y;
-   p.x=Math.max(18,Math.min(W-18,p.x+Math.cos(a)*185));p.y=Math.max(50,Math.min(H-18,p.y+Math.sin(a)*185));
-   p.inv=Math.max(Number(p.inv)||0,.9);
-   for(let i=0;i<=8;i++){const t=i/8,x=ox+(p.x-ox)*t,y=oy+(p.y-oy)*t;g.ai.push([x,y,.46*(1-t*.38)]);if(i%2===0)em(x,y,4,{c:i%4?'#b57bff':'#2ec4b6',s:140,l:.34,r:2.6});}
-   for(let i=-1;i<=1;i++)sh(p.x,p.y,a+i*.22,555,39,{bo:1,big:1,lf:3.1,c:['#b57bff','#2ec4b6','#ffd24a'][i+1],batStyle:'tripleT'});
+   p.x=Math.max(18,Math.min(W-18,p.x+Math.cos(a)*175));p.y=Math.max(50,Math.min(H-18,p.y+Math.sin(a)*175));
+   p.inv=Math.max(Number(p.inv)||0,.85);
+   for(let i=0;i<=8;i++){const t=i/8,x=ox+(p.x-ox)*t,y=oy+(p.y-oy)*t;g.ai.push([x,y,.38*(1-t*.34)]);if(i%2===0)em(x,y,4,{c:i%4?'#f4efe8':'#c93442',s:135,l:.28,r:2.4});}
+   for(let i=-2;i<=2;i++)sh(p.x,p.y,a+i*.115,530+Math.abs(i)*22,25+(i===0?13:0),{big:1,baseball:1,lf:2.65,c:'#fff7e8',rot:tm*6+i});
    const hitX=(ox+p.x)*.5,hitY=(oy+p.y)*.5;if(b.inv<=0&&Math.hypot(b.x-hitX,b.y-hitY)<170)b.hp-=74*CHB[2][3]*(g.bonus||1);
-   ring2(ox,oy,'#b57bff',.34,270);ring2(p.x,p.y,'#2ec4b6',.48,440);g.shake=Math.max(g.shake||0,.32);g.cast=['RIFTSTEP RALLY',1.1];
+   ring2(ox,oy,'#f4efe8',.3,230);ring2(p.x,p.y,'#c93442',.44,410);g.shake=Math.max(g.shake||0,.28);g.cast=['DUGOUT DASH — LINE DRIVE!',1.05];
  }],
- ['Batline Breaker',14,'#2ec4b6',()=>{
+ ['Grand Slam',14,'#c93442',()=>{
    const p=g.p,b=g.b;let cleared=0;
-   g.eb=g.eb.filter(e=>{if(Math.hypot(e.x-p.x,e.y-p.y)<175){cleared++;em(e.x,e.y,3,{c:'#2ec4b6',s:130,l:.28,r:2});return false}return true});
-   // Three rotating ranks of bats converge like a pinball combo, then return to Triple T.
+   // The swing knocks away nearby incoming pitches, then launches a classic spray of baseballs.
+   g.eb=g.eb.filter(e=>{if(Math.hypot(e.x-p.x,e.y-p.y)<175){cleared++;em(e.x,e.y,3,{c:'#f4efe8',s:120,l:.25,r:2});return false}return true});
    for(let i=0;i<9;i++){
-     const orbit=i*PI2/9+tm*.28,ringR=52+(i%3)*11,x=p.x+Math.cos(orbit)*ringR,y=p.y+Math.sin(orbit)*ringR*.7;
-     const a=Math.atan2(b.y-y,b.x-x)+(i%3-1)*.12;
-     sh(x,y,a,500+(i%3)*45,31+(i%3)*4,{bo:1,big:1,lf:3.3,c:['#2ec4b6','#b57bff','#ffd24a'][i%3],batStyle:'tripleT'});
+     const orbit=i*PI2/9+tm*.12,ringR=43+(i%3)*12,x=p.x+Math.cos(orbit)*ringR,y=p.y+Math.sin(orbit)*ringR*.72;
+     const a=Math.atan2(b.y-y,b.x-x)+(i%3-1)*.095;
+     sh(x,y,a,510+(i%3)*35,30+(i%3)*3,{big:1,baseball:1,lf:2.9,c:'#fff7e8',rot:tm*5+i});
    }
-   ring2(p.x,p.y,'#2ec4b6',.64,560);ring2(p.x,p.y,'#b57bff',.35,390);em(p.x,p.y,52,{c:'#2ec4b6',s:340,l:.6,r:3.5});
-   g.cast=['BATLINE BREAKER  /  '+cleared+' PROJECTILES CAUGHT',1.25];
+   ring2(p.x,p.y,'#f4efe8',.58,520);ring2(p.x,p.y,'#c93442',.32,365);em(p.x,p.y,38,{c:'#d7b06c',s:310,l:.5,r:3});
+   g.cast=['GRAND SLAM  /  '+cleared+' PITCHES BATTED AWAY',1.2];
  }],
- ['Moonbreaker Rally',22,'#ffd24a',()=>{
+ ['Walk-Off Mode',22,'#d7b06c',()=>{
    const p=g.p;g.ttNight=7;g.ttShot=0;p.inv=Math.max(Number(p.inv)||0,.45);
-   for(let i=0;i<12;i++)sh(p.x,p.y,i*PI2/12,425,19,{bo:1,big:1,lf:2.7,c:i%3===0?'#ffd24a':i%3===1?'#2ec4b6':'#b57bff',batStyle:'tripleT'});
-   ring2(p.x,p.y,'#ffd24a',.6,560);ring2(p.x,p.y,'#2ec4b6',.34,400);ring2(p.x,p.y,'#b57bff',.22,280);
-   em(p.x,p.y,62,{c:'#ffd24a',s:330,l:.62,r:3.5});g.cast=['MOONBREAKER RALLY — EXTRA BATS FOR 7s',1.35];
+   for(let i=0;i<10;i++)sh(p.x,p.y,i*PI2/10,420,18,{big:1,baseball:1,lf:2.45,c:'#fff7e8',rot:tm*4+i*.7});
+   ring2(p.x,p.y,'#f4efe8',.56,520);ring2(p.x,p.y,'#c93442',.34,390);ring2(p.x,p.y,'#d7b06c',.22,280);
+   em(p.x,p.y,48,{c:'#f4efe8',s:300,l:.52,r:3.2});g.cast=['WALK-OFF MODE — TWO EXTRA BASEBALLS FOR 7s',1.3];
  }]
 ];
 
 // Palette and lifetime for the ability FX are deliberately kept compact so snapshots stay small.
-const ZUB_FX_PALETTES=[['#ffd24a','#ff4d6d','#fff3b0'],['#9fe8ff','#ff9d2e','#ffffff'],['#2ec4b6','#b57bff','#ffd24a'],['#7df9ff','#b57bff','#ffffff'],['#ffb84d','#c1121f','#fff3b0'],['#65f4ff','#b57bff','#ffffff']];
+const ZUB_FX_PALETTES=[['#ffd24a','#ff4d6d','#fff3b0'],['#9fe8ff','#ff9d2e','#ffffff'],['#f4efe8','#c93442','#d7b06c'],['#7df9ff','#b57bff','#ffffff'],['#ffb84d','#c1121f','#fff3b0'],['#65f4ff','#b57bff','#ffffff']];
 let zubAbilityFxSerial=0;
 function zubPushAbilityFx(ch,j,x,y,ex,ey,bx,by,ownerId){
   if(!g)return null;
@@ -2280,7 +2302,7 @@ mpRemoteFire=function(pl,a,dm,n,allowEcho=true){
   const start=g&&g.pb?g.pb.length:0,ch=mpCharIndex(pl&&pl.char,0),out=_zubMpRemoteFireV42(pl,a,dm,n,allowEcho);
   if(g&&Array.isArray(g.pb))for(let i=start;i<g.pb.length;i++){
     const s=g.pb[i];if(s.ownerChar===undefined)s.ownerChar=ch;
-    if(ch===2&&s.bo){s.batStyle='tripleT';s.c=s.c||['#b57bff','#2ec4b6','#ffd24a'][i%3];}
+    if(ch===2&&(s.big||s.bo)){s.baseball=1;s.bo=0;s.big=1;s.batStyle=undefined;s.c='#fff7e8';}
   }
   return out;
 };
@@ -2306,10 +2328,23 @@ function zubDrawAbilityFx(){
       if(j===0){for(let i=0;i<12;i++){const a=i*PI2/12+f.seed,rr0=base*(.35+(i%3)*.24);X.globalAlpha=fade*.75;X.strokeStyle=i%2?c1:c2;X.lineWidth=i%3===0?3:1.5;X.beginPath();X.moveTo(x+Math.cos(a)*10,y+Math.sin(a)*10);X.lineTo(x+Math.cos(a+.08)*rr0,y+Math.sin(a+.08)*rr0);X.stroke();}zubArc(x,y,base,c2,0,PI2,3,fade*.8);}
       else if(j===1){for(let i=0;i<6;i++){const a=i*PI2/6+tm*.8;zubHex(x+Math.cos(a)*24,y+Math.sin(a)*20,17,c1,fade*.9,a); }zubHex(x,y,39,c3,fade*.85,tm*.15);}
       else{for(let side of[-1,1]){zubArc(x+side*18,y+3,base*.67,c1,side>0?-.95:Math.PI-.95,side>0?.95:Math.PI+.95,7,fade*.9);zubArc(x+side*18,y+3,base*.45,c2,side>0?-.7:Math.PI-.7,side>0?.7:Math.PI+.7,2,fade*.85);}zubStar(x,y,19,c3,tm,fade*.7);}
-    }else if(ch===2){ // Triple T: an obvious bat silhouette language across all three abilities.
-      if(j===0){X.globalAlpha=fade*.55;X.strokeStyle=c2;X.lineWidth=4;X.setLineDash([9,6]);X.beginPath();X.moveTo(Number(f.x)||x,Number(f.y)||y);X.quadraticCurveTo((Number(f.x)+x)*.5,(Number(f.y)+y)*.5-40,x,y);X.stroke();X.setLineDash([]);for(let i=0;i<6;i++){const u=i/5,bx0=(Number(f.x)||x)+(x-(Number(f.x)||x))*u,by0=(Number(f.y)||y)+(y-(Number(f.y)||y))*u;zubDrawBat(bx0,by0,1.05-u*.35,ang+(1-u)*.8,i%2?c1:c2);}}
-      else if(j===1){for(let i=0;i<9;i++){const a=i*PI2/9-f.seed+p*1.4,rr0=28+(1-p)*50,tx=x+Math.cos(a)*rr0,ty=y+Math.sin(a)*rr0*.72,tx2=tx+(bx-tx)*p*.65,ty2=ty+(by-ty)*p*.65;X.globalAlpha=fade*.35;X.strokeStyle=i%2?c1:c2;X.lineWidth=1.2;X.beginPath();X.moveTo(tx,ty);X.lineTo(tx2,ty2);X.stroke();zubDrawBat(tx2,ty2,1.05,Math.atan2(by-ty2,bx-tx2),i%3===0?c3:i%2?c1:c2);}zubArc(x,y,base*.95,c3,0,PI2,2.5,fade*.6);}
-      else{for(let i=0;i<3;i++){const a=tm*1.5+p*2+i*PI2/3;zubDrawBat(x+Math.cos(a)*base*.62,y+Math.sin(a)*base*.42,1.2,a+(Math.PI/2),[c1,c2,c3][i]);}zubArc(x,y,base*.78,c3,tm,tm+Math.PI*1.5,3,fade*.85);zubArc(x,y,base*.5,c2,-tm, -tm+Math.PI*1.5,2,fade*.7);}
+    }else if(ch===2){ // Triple T: leather, chalk lines, home plate and stitched baseballs.
+      if(j===0){
+        const sx=Number(f.x)||x,sy=Number(f.y)||y;
+        X.globalAlpha=fade*.6;X.strokeStyle=c3;X.lineWidth=4;X.setLineDash([6,7]);X.beginPath();X.moveTo(sx,sy);X.quadraticCurveTo((sx+x)*.5,(sy+y)*.5-24,x,y);X.stroke();X.setLineDash([]);
+        zubArc(x,y,base*.62,c2,ang-1.15,ang+.8,5,fade*.85);zubDrawBaseballBat(x+16,y+5,.7,-.7+p*.5,c3);
+        for(let i=0;i<5;i++){const u=i/4,tx=sx+(x-sx)*u,ty=sy+(y-sy)*u;zubDrawBaseballProjectile({x:tx,y:ty,ballR:5.7,big:1,rot:tm*7+i});}
+      }else if(j===1){
+        // A home-plate diamond and baseballs converging after one huge swing.
+        X.save();X.globalAlpha=fade*.62;X.strokeStyle=c3;X.lineWidth=2.3;X.beginPath();X.moveTo(x-base*.42,y-base*.2);X.lineTo(x+base*.42,y-base*.2);X.lineTo(x+base*.42,y+base*.25);X.lineTo(x,y+base*.55);X.lineTo(x-base*.42,y+base*.25);X.closePath();X.stroke();X.restore();
+        zubArc(x,y,base*.82,c2,ang-.7,ang+1.55,4,fade*.7);zubDrawBaseballBat(x+18,y+8,.77,-.9+p*.7,c1);
+        for(let i=0;i<9;i++){const a=i*PI2/9-f.seed+p*1.2,rr0=base*(.35+(i%3)*.085),tx=x+Math.cos(a)*rr0,ty=y+Math.sin(a)*rr0*.72;zubDrawBaseballProjectile({x:tx+(bx-tx)*p*.48,y:ty+(by-ty)*p*.48,ballR:5.8,big:1,rot:tm*6+i});}
+        T('GRAND SLAM',x,y-base*.45,9,c3);
+      }else{
+        for(let i=0;i<5;i++){const a=tm*1.1+p*2+i*PI2/5,rr0=base*(.38+(i%2)*.11);zubDrawBaseballProjectile({x:x+Math.cos(a)*rr0,y:y+Math.sin(a)*rr0*.64,ballR:6.2,big:1,rot:tm*8+i});}
+        zubArc(x,y,base*.76,c3,tm,tm+Math.PI*1.75,4,fade*.88);zubArc(x,y,base*.48,c2,-tm,-tm+Math.PI*1.5,2.5,fade*.8);
+        zubDrawBaseballBat(x+19,y+6,.82,-.6+p*.6,c1);T('WALK-OFF!',x,y-base*.48,10,c3);
+      }
     }else if(ch===3){ // Naoya: lightning forks and afterimage chevrons.
       for(let side of[-1,1]){X.globalAlpha=fade*.85;X.strokeStyle=side<0?c1:c2;X.lineWidth=2.5;X.beginPath();X.moveTo(x+side*14,y+24);X.lineTo(x+side*30,y+3);X.lineTo(x+side*14,y-3);X.lineTo(x+side*39,y-36*p);X.stroke();}
       zubArc(x,y,base*.86,c1,ang-.65,ang+.65,4,fade*.8);for(let i=0;i<4;i++){const u=i/4;zubStar(x-Math.cos(ang)*u*base*.8,y-Math.sin(ang)*u*base*.8,5-u*2,c2,ang,fade*.7);}
@@ -2340,8 +2375,13 @@ upd=function(dt){
 const _zubDrawV42=draw;
 draw=function(){_zubDrawV42();zubDrawAbilityFx();};
 
-CHS[2][2]='Blink strikes, converging bat volleys,|and a Moonbreaker power-up.';
-TIPS.push('Triple T tip: Riftstep Rally blinks forward; Moonbreaker adds two bats to every shot.');
+CHS[2][2]='Power swings, grand slams,|and a Walk-Off power-up.';
+TIPS.push('Triple T tip: Grand Slam knocks away nearby pitches; Walk-Off adds two baseballs to every shot.');
 LOG.unshift(['v42 (latest)','Remade Triple T as a rift-bat showman with a new three-bat primary volley, Riftstep Rally, Batline Breaker and Moonbreaker Rally. Added bespoke animated visual effects for all 18 character abilities, plus owner-aware neon boomerang styling for co-op.']);
 
+
+CHS[2]=['Triple T','Baseball slugger','Power swings, grand slams,|and a Walk-Off power-up.'];
+CHD[2]='Triple T is a baseballer who wields a wooden bat, wears a pinstriped uniform, and attacks with stitched baseballs. Dugout Dash is a charging power swing, Grand Slam swats away nearby pitches and sends a barrage, and Walk-Off Mode adds extra baseballs for seven seconds.';
+CABD[2]=['Dash toward the boss with a powerful bat swing and a spread of line-drive baseballs.','Sweep the bat in a Grand Slam, knocking away nearby enemy pitches and firing a nine-ball barrage.','For 7 seconds, every basic attack gains two extra stitched baseballs. A Walk-Off power-up.'];
+LOG.unshift(['v43 (latest)','Corrected Triple T to a true baseballer: baseball cap and pinstriped uniform, clearly visible wooden bat, stitched baseball projectiles, Dugout Dash, Grand Slam and Walk-Off Mode. Replaced fantasy bat-creature visuals in his ability FX and synchronized baseball projectiles for multiplayer guests.']);
 </script></body></html>
